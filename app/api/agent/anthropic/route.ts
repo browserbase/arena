@@ -1,50 +1,15 @@
 import { Stagehand } from "@browserbasehq/stagehand";
-import { createStagehandUserLogger } from "../../agent/logger";
+import { createAnthropicLogger } from "@/lib/loggers/anthropicLogger";
+import { AGENT_INSTRUCTIONS } from "@/app/constants/prompt";
+import { sseComment, sseEncode } from "@/lib/agent/utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 600;
 
-function sseEncode(event: string, data: unknown): Uint8Array {
-  const encoder = new TextEncoder();
-  return encoder.encode(`event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`);
-}
-
-function sseComment(comment: string): Uint8Array {
-  const encoder = new TextEncoder();
-  return encoder.encode(`:${comment}\n\n`);
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const [sessionId, goal] = [searchParams.get("sessionId"), searchParams.get("goal")];
-
-  const AGENT_INSTRUCTIONS = `
-  <SYSTEM_CAPABILITY>
-* You are a web browsing agent with access to a real browser via Stagehand.
-* You can navigate to websites, interact with web pages, fill forms, click buttons, and perform web-based tasks.
-* You have access to browser automation tools to control web interactions programmatically.
-* You can take screenshots to verify page content and confirm actions.
-* You can scroll, zoom, and interact with web elements like a human user would.
-* You can handle multiple tabs and windows if needed for complex workflows.
-* The current date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
-</SYSTEM_CAPABILITY>
-
-You are a high-reliability web browsing agent operating a real browser via Stagehand.
-
-Rules:
-- Work in atomic steps. One navigation OR one specific action per step.
-- Prefer direct navigation to the most relevant destination; use search only if needed.
-- Keep reasoning traces succinct.
-- Avoid risky actions (downloads, logins) unless absolutely necessary.
-- If the goal is achieved, conclude immediately and return the result.
-
-- Do NOT use keyboard shortcuts (Control/Meta combos). Always click an input, then type text.
-- If typing fails, click the target input again and retype. Avoid Ctrl/Meta keys entirely.
-- Prefer large, visible elements; avoid clicking near window edges.
-
-IMPORTANT: The browser viewport is locked at exactly 1024x768 pixels and cannot be resized. Use these fixed dimensions when planning your actions and coordinate calculations.
-`;
 
   if (!sessionId || !goal) {
     return new Response(
@@ -61,14 +26,14 @@ IMPORTANT: The browser viewport is locked at exactly 1024x768 pixels and cannot 
     start: async (controller) => {
       let keepAliveTimer: ReturnType<typeof setInterval> | undefined;
       keepAliveTimer = setInterval(() => {
-        safeEnqueue(sseComment("keepalive"));
+          safeEnqueue(sseComment("keepalive"));
       }, 15000);
 
       let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
       timeoutTimer = setTimeout(async () => {
-        console.log(`[SSE] Timeout reached for session ${sessionId}`);
-        send("error", { message: "Agent run timed out after 10 minutes" });
-        await cleanup();
+          console.log(`[SSE-Gemini] Timeout reached for session ${sessionId}`);
+          send("error", { message: "Agent run timed out after 10 minutes" });
+          await cleanup();
       }, 10 * 60 * 1000);
 
       let closed = false;
@@ -78,7 +43,7 @@ IMPORTANT: The browser viewport is locked at exactly 1024x768 pixels and cannot 
         try {
           controller.enqueue(chunk);
         } catch (err) {
-          console.error(`[SSE] enqueue error`, err instanceof Error ? err.message : String(err));
+          console.error(`[SSE-Anthropic] enqueue error`, err instanceof Error ? err.message : String(err));
         }
       };
 
@@ -87,41 +52,36 @@ IMPORTANT: The browser viewport is locked at exactly 1024x768 pixels and cannot 
         try {
           safeEnqueue(sseEncode(event, data));
         } catch (err) {
-          console.error(`[SSE] send error`, err instanceof Error ? err.message : String(err));
+          console.error(`[SSE-Anthropic] send error`, err instanceof Error ? err.message : String(err));
         }
       };
-
-      let viewportLockInterval: ReturnType<typeof setInterval> | undefined;
 
       const cleanup = async (stagehand?: Stagehand) => {
         if (closed) return;
         closed = true;
         if (keepAliveTimer) clearInterval(keepAliveTimer);
         if (timeoutTimer) clearTimeout(timeoutTimer);
-        if (viewportLockInterval) clearInterval(viewportLockInterval);
         try {
           if (stagehand && !stagehand.isClosed) {
             await stagehand.close();
           }
         } catch {
-          console.error(`[SSE] error closing stagehand`, stagehand);
+          console.error(`[SSE-Anthropic] error closing stagehand`, stagehand);
         }
         controller.close();
       };
 
-      // Keep the connection alive for proxies
       keepAliveTimer = setInterval(() => {
         safeEnqueue(sseComment("keepalive"));
       }, 15000);
 
-      // Hard timeout at 10 minutes
       timeoutTimer = setTimeout(async () => {
-        console.log(`[SSE] Timeout reached for session ${sessionId}`);
+        console.log(`[SSE-Anthropic] Timeout reached for session ${sessionId}`);
         send("error", { message: "Agent run timed out after 10 minutes" });
         await cleanup();
       }, 10 * 60 * 1000);
 
-      console.log(`[SSE] Starting Stagehand agent run`, {
+      console.log(`[SSE-Anthropic] Starting Stagehand agent run`, {
         sessionId,
         goal,
         hasInstructions: true,
@@ -134,53 +94,64 @@ IMPORTANT: The browser viewport is locked at exactly 1024x768 pixels and cannot 
         modelClientOptions: {
           apiKey: process.env.OPENAI_API_KEY,
         },
+        browserbaseSessionCreateParams: {
+          projectId: process.env.BROWSERBASE_PROJECT_ID!,
+          proxies: true,
+          browserSettings: {
+            viewport: {
+              width: 1288,
+              height: 711,
+            },
+          },
+        },
         useAPI: false,
         verbose: 2,
         disablePino: true,
-        logger: createStagehandUserLogger(send, { forwardStepEvents: false }),
+        logger: createAnthropicLogger(send),
       });
       stagehandRef = stagehand;
 
       try {
         const init = await stagehand.init();
-        console.log(`[SSE] Stagehand initialized`, init);
+        console.log(`[SSE-Anthropic] Stagehand initialized`, init);
 
         send("start", {
           sessionId,
           goal,
-          model: "claude-sonnet-4-20250514",
+          model: "anthropic",
           init,
           startedAt: new Date().toISOString(),
+          provider: "anthropic",
         });
 
         const agent = stagehand.agent({
-          provider: "google", 
-          model: "computer-use-exp-07-16",
+          provider: "anthropic",
+          model: "claude-sonnet-4-20250514",
           options: {
-            apiKey: process.env.GOOGLE_API_KEY,
+            apiKey: process.env.ANTHROPIC_API_KEY,
           },
           instructions: AGENT_INSTRUCTIONS,
         });
 
         const result = await agent.execute({
-            instruction: goal,
-            autoScreenshot: true,
-            waitBetweenActions: 200,
-            maxSteps: 100,
+          instruction: goal,
+          autoScreenshot: true,
+          waitBetweenActions: 200,
+          maxSteps: 100,
         });
 
         try {
-        console.log(`[SSE] metrics snapshot`, stagehand.metrics);
-        send("metrics", stagehand.metrics);
+          console.log(`[SSE-Anthropic] metrics snapshot`, stagehand.metrics);
+          send("metrics", stagehand.metrics);
         } catch {}
 
-          console.log(`[SSE] done`, { success: result.success, completed: result.completed });
-          send("done", result);
+        console.log(`[SSE-Anthropic] done`, { success: result.success, completed: result.completed });
+        send("done", result);
 
         await cleanup(stagehand);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`[SSE] error`, message);
+        console.error(`[SSE-Anthropic] error`, message);
         send("error", { message });
         await cleanup(stagehand);
       }

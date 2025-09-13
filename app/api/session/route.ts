@@ -81,13 +81,14 @@ async function createSession(timezone?: string) {
     apiKey: process.env.BROWSERBASE_API_KEY!,
   });
 
-  const browserSettings: Browserbase.Sessions.SessionCreateParams.BrowserSettings = {
+  const browserSettings: any = {
     viewport: {
-      width: 1024,
-      height: 768,
+      width: 2560,
+      height: 1440,
     },
+    os: "windows",
     blockAds: true,
-    // advancedStealth: true
+    advancedStealth: true
   };
 
   console.log("timezone ", timezone);

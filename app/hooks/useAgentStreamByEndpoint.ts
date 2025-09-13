@@ -4,21 +4,26 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserStep } from "../types/ChatFeed";
 import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "../types/Agent";
 
+type UseAgentStreamByEndpointProps = UseAgentStreamProps & {
+  endpoint: string; // e.g. "/api/agent/gemini" | "/api/agent/openai" | "/api/agent/anthropic"
+};
+
 // Global trackers to avoid duplicate session creation in React Strict Mode
-// by sharing a single in-flight promise across mounts for the same goal.
+// by sharing a single in-flight promise across mounts for the same goal + endpoint.
 const sessionCreationPromises = new Map<
   string,
   Promise<{ sessionId: string; sessionUrl: string | null; connectUrl: string | null }>
 >();
 
-export function useAgentStream({
+export function useAgentStreamByEndpoint({
+  endpoint,
   sessionId,
   goal,
   onStart,
   onDone,
   onError,
-}: UseAgentStreamProps) {
-  console.log(`[useAgentStream] Hook called with goal: "${goal?.substring(0, 50)}...", sessionId: ${sessionId}`);
+}: UseAgentStreamByEndpointProps) {
+  console.log(`[useAgentStreamByEndpoint] Hook called with endpoint: ${endpoint}, goal: "${goal?.substring(0, 50)}...", sessionId: ${sessionId}`);
   const [state, setState] = useState<AgentStreamState>({
     sessionId: sessionId,
     sessionUrl: null,
@@ -45,8 +50,6 @@ export function useAgentStream({
     onDoneRef.current = onDone;
     onErrorRef.current = onError;
   }, [onStart, onDone, onError]);
-
-  // No need to reset session tracking anymore - using tracker system
 
   const stop = useCallback(() => {
     if (eventSourceRef.current) {
@@ -85,6 +88,7 @@ export function useAgentStream({
       }
       return { kind: "action", step: stepCounterRef.current, tool: fnMatch[1], args };
     }
+
     return null;
   }, []);
 
@@ -92,13 +96,14 @@ export function useAgentStream({
   const isEmptyObject = useCallback((v: unknown) => isPlainObject(v) && Object.keys(v as Record<string, unknown>).length === 0, [isPlainObject]);
 
   useEffect(() => {
-    console.log(`[useAgentStream] useEffect triggered with goal: "${goal?.substring(0, 50)}..."`);
+    console.log(`[useAgentStreamByEndpoint] useEffect triggered with endpoint: ${endpoint}, goal: "${goal?.substring(0, 50)}..."`);
     if (!goal) {
-      console.log(`[useAgentStream] No goal, returning`);
+      console.log(`[useAgentStreamByEndpoint] No goal, returning`);
       return;
     }
 
     let cancelled = false;
+    const promiseKey = `${endpoint}|${goal}`;
 
     const initializeStream = async () => {
       let currentSessionId = sessionId;
@@ -108,7 +113,7 @@ export function useAgentStream({
         try {
           setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-          let promise = sessionCreationPromises.get(goal);
+          let promise = sessionCreationPromises.get(promiseKey);
           if (!promise) {
             promise = (async () => {
               const sessionResponse = await fetch("/api/session", {
@@ -124,14 +129,14 @@ export function useAgentStream({
                 throw new Error(sessionData.error || "Failed to create session");
               }
 
-              console.log(`[useAgentStream] Session created successfully: ${sessionData.sessionId}`);
+              console.log(`[useAgentStreamByEndpoint] Session created successfully for ${endpoint}: ${sessionData.sessionId}`);
               return {
                 sessionId: sessionData.sessionId as string,
                 sessionUrl: (sessionData.sessionUrl as string) ?? null,
                 connectUrl: (sessionData.connectUrl as string) ?? null,
               };
             })();
-            sessionCreationPromises.set(goal, promise);
+            sessionCreationPromises.set(promiseKey, promise);
           }
 
           const result = await promise;
@@ -149,7 +154,7 @@ export function useAgentStream({
           setState((prev) => ({ ...prev, error: errorMessage, isLoading: false }));
           onErrorRef.current?.(errorMessage);
           // Allow retries by clearing promise on error
-          sessionCreationPromises.delete(goal);
+          sessionCreationPromises.delete(promiseKey);
           return;
         }
       }
@@ -168,7 +173,7 @@ export function useAgentStream({
         goal,
       });
 
-      const es = new EventSource(`/api/agent/stream?${params.toString()}`);
+      const es = new EventSource(`${endpoint}?${params.toString()}`);
       eventSourceRef.current = es;
 
       // Add event listeners
@@ -310,6 +315,123 @@ export function useAgentStream({
     // Disable SSE 'step' duplication: logs already carry summary/action
     es.addEventListener("step", () => {});
 
+    // Handle Anthropic step events (new structured format)
+    es.addEventListener("anthropic_step", (e) => {
+      if (cancelled) return;
+      try {
+        const logEvent = JSON.parse((e as MessageEvent).data);
+        const { type, provider, stepNumber, data, originalMessage } = logEvent;
+        
+        if (provider === 'anthropic') {
+          setState((prev) => {
+            const newLogs = [...prev.logs, logEvent];
+            
+            // Create BrowserStep from the structured log event
+            const newStep: BrowserStep = {
+              stepNumber: stepNumber || ++stepCounterRef.current,
+              text: '',
+              reasoning: originalMessage,
+              tool: type === 'processing_block' && data.toolUse ? data.toolUse.input.action : type,
+              instruction: '',
+              actionArgs: {
+                type: `anthropic_${type}`,
+                provider: 'anthropic',
+                ...data
+              }
+            };
+
+            // Skip step execution events - they're just noise
+            if (type === 'step_execution') {
+              return prev; // Don't create a step for step execution
+            }
+
+            // Add specific text content based on type
+            if (type === 'text_block' && data.textBlock) {
+              newStep.text = data.textBlock.content;
+              newStep.reasoning = `Found text block: ${data.textBlock.content}`;
+            } else if (type === 'processing_block' && data.toolUse) {
+              newStep.reasoning = `Processing Tool: ${data.toolUse.input.action}`;
+              newStep.tool = data.toolUse.input.action;
+            } else if (type === 'error' && data.error) {
+              newStep.reasoning = `Error: ${data.error.details}`;
+              newStep.tool = 'ERROR';
+            } else if (type === 'completion' && data.completion) {
+              newStep.text = data.completion.message;
+              newStep.reasoning = 'Task execution completed';
+              newStep.tool = 'MESSAGE';
+            }
+            
+            return { ...prev, logs: newLogs, steps: [...prev.steps, newStep] };
+          });
+        }
+      } catch (err) {
+        console.error("Error parsing anthropic_step event:", err);
+      }
+    });
+
+    // Handle Anthropic Processing block events (legacy support)
+    es.addEventListener("processing_block", (e) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse((e as MessageEvent).data);
+        const { blockData, provider } = payload;
+        
+        if (provider === 'anthropic' && blockData) {
+          console.log('[useAgentStreamByEndpoint] Legacy processing_block event - consider migrating to anthropic_step');
+          setState((prev) => {
+            const newLogs = [...prev.logs, payload];
+            
+            // Create a BrowserStep from the processing block data
+            if (blockData.type === 'tool_use' && blockData.input) {
+              // Increment step counter for each new step
+              stepCounterRef.current = stepCounterRef.current + 1;
+              const newStep: BrowserStep = {
+                stepNumber: stepCounterRef.current,
+                text: '',
+                reasoning: `Processing Tool: ${blockData.input.action}`,
+                tool: blockData.input.action || 'computer',
+                instruction: '',
+                actionArgs: {
+                  type: 'anthropic_processing_block',
+                  tool_id: blockData.id,
+                  tool_name: blockData.name,
+                  action: blockData.input.action,
+                  coordinate: blockData.input.coordinate,
+                  text: blockData.input.text,
+                  duration: blockData.input.duration,
+                  ...blockData.input
+                }
+              };
+              
+              return { ...prev, logs: newLogs, steps: [...prev.steps, newStep] };
+            }
+            
+            if (blockData.type === 'text') {
+              // Increment step counter for each new step
+              stepCounterRef.current = stepCounterRef.current + 1;
+              const newStep: BrowserStep = {
+                stepNumber: stepCounterRef.current,
+                text: blockData.text,
+                reasoning: 'Anthropic Thinking',
+                tool: 'MESSAGE',
+                instruction: blockData.text,
+                actionArgs: {
+                  type: 'anthropic_text_block',
+                  text: blockData.text
+                }
+              };
+              
+              return { ...prev, logs: newLogs, steps: [...prev.steps, newStep] };
+            }
+            
+            return { ...prev, logs: newLogs };
+          });
+        }
+      } catch (err) {
+        console.error("Error parsing processing_block event:", err);
+      }
+    });
+
     es.addEventListener("metrics", (e) => {
       // Skip showing metrics to users - too technical
       try {
@@ -330,7 +452,7 @@ export function useAgentStream({
 
         onDoneRef.current?.(payload);
         // Clear the session promise for this goal to allow future runs
-        sessionCreationPromises.delete(goal);
+        sessionCreationPromises.delete(promiseKey);
       } catch (err) {
         console.error("Error parsing done event:", err);
       }
@@ -358,7 +480,7 @@ export function useAgentStream({
         onErrorRef.current?.(errorMessage);
       }
       // Clear the session promise for this goal to allow retries
-      sessionCreationPromises.delete(goal);
+      sessionCreationPromises.delete(promiseKey);
       es.close();
       eventSourceRef.current = null;
     });
@@ -379,7 +501,7 @@ export function useAgentStream({
         eventSourceRef.current.close();
       }
     };
-  }, [sessionId, goal, parseLog, isEmptyObject]);
+  }, [endpoint, sessionId, goal, parseLog, isEmptyObject]);
 
   return {
     ...state,

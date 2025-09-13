@@ -150,12 +150,15 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
           exit="exit"
           key={isCompleted ? "completed" : "active"}
         >
-          {/* Browser frame */}
+          {/* Browser frame with 4:3 aspect ratio to match 1024x768 viewport */}
           <div
-            className="w-full h-[250px] md:h-[600px] flex items-center justify-center overflow-hidden border border-[#CAC8C7] shadow-sm relative"
+            className="w-full flex items-center justify-center overflow-hidden border border-[#CAC8C7] shadow-sm relative"
             style={{
               backgroundColor: "rgba(245, 240, 255, 0.75)",
               backdropFilter: "blur(8px)",
+              aspectRatio: "4/3", // Match the 1024x768 browser viewport ratio
+              minHeight: "300px",
+              maxHeight: "70vh", // Don't exceed 70% of viewport height
             }}
           >
             {/* Left Curtain */}

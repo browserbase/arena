@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import AnimatedButton from "./components/ui/AnimatedButton";
 import posthog from "posthog-js";
-import ChatFeed from "./components/ChatFeed";
+import ChatFeedVS from "./components/ChatFeedVS";
 import NavBar from "./components/NavBar";
 import { Code, MessageCircle, UtensilsCrossed, Search } from "lucide-react";
 
@@ -46,9 +46,12 @@ const Tooltip = ({
   );
 };
 
+type RightProvider = "openai" | "anthropic";
+
 export default function Home() {
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [initialMessage, setInitialMessage] = useState<string | null>(null);
+  const [rightProvider, setRightProvider] = useState<RightProvider>("openai");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -90,14 +93,15 @@ export default function Home() {
       setIsChatVisible(true);
 
       try {
-        posthog.capture("gemini_cua_submit_message", {
+        posthog.capture("vs_browser_submit_message", {
           message: finalMessage,
+          rightProvider,
         });
       } catch (e) {
         console.error(e);
       }
     },
-    [setInitialMessage, setIsChatVisible]
+    [setInitialMessage, setIsChatVisible, rightProvider]
   );
 
   return (
@@ -139,11 +143,45 @@ export default function Home() {
               <div className="p-8 md:p-10 lg:p-12 flex flex-col items-center gap-8 md:gap-10">
                 <div className="flex flex-col items-center gap-3 md:gap-5">
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-ppneue text-gray-900 text-center">
-                    Gemini Browser
+                    VS Browser
                   </h1>
                   <p className="text-base md:text-lg font-ppsupply text-gray-500 text-center">
-                    Hit run to watch AI browse the web.
+                    Compare AI models side-by-side as they browse the web.
                   </p>
+                  
+                  {/* Provider Selection */}
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 border border-[#CAC8C7]">
+                    <div className="flex items-center gap-2">
+                      <span className="font-ppsupply text-sm text-[#2E191E] font-medium">Left:</span>
+                      <span className="px-3 py-1 bg-[#2E191E] text-white text-sm font-ppsupply">Gemini</span>
+                    </div>
+                    <div className="w-px h-6 bg-[#CAC8C7]"></div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-ppsupply text-sm text-[#2E191E] font-medium">Right:</span>
+                      <div className="inline-flex border border-[#CAC8C7] bg-white">
+                        <button
+                          className={`px-4 py-1 text-sm font-ppsupply transition-all duration-200 ${
+                            rightProvider === "openai" 
+                              ? "bg-[#2E191E] text-white" 
+                              : "bg-white text-[#2E191E] hover:bg-gray-50"
+                          }`}
+                          onClick={() => setRightProvider("openai")}
+                        >
+                          OpenAI
+                        </button>
+                        <button
+                          className={`px-4 py-1 text-sm font-ppsupply transition-all duration-200 ${
+                            rightProvider === "anthropic" 
+                              ? "bg-[#2E191E] text-white" 
+                              : "bg-white text-[#2E191E] hover:bg-gray-50"
+                          }`}
+                          onClick={() => setRightProvider("anthropic")}
+                        >
+                          Anthropic
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <form
@@ -299,9 +337,10 @@ export default function Home() {
           </main>
         </div>
       ) : (
-        <ChatFeed
-          key={`chat-feed-${initialMessage}`}
+        <ChatFeedVS
+          key={`chat-feed-vs-${initialMessage}-${rightProvider}`}
           initialMessage={initialMessage}
+          rightProvider={rightProvider}
           onClose={() => setIsChatVisible(false)}
         />
       )}
