@@ -164,7 +164,6 @@ export async function GET(request: Request) {
         const result = await agent.execute({
           instruction: goal,
           autoScreenshot: true,
-          waitBetweenActions: 200,
           maxSteps: 100,
         });
 

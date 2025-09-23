@@ -2,189 +2,119 @@ import { type LogLine } from "@browserbasehq/stagehand";
 
 type SendFn = (event: string, data: unknown) => void;
 
-interface AnthropicLogEvent {
-  type: 'step_execution' | 'text_block' | 'tool_use' | 'processing_block' | 'error' | 'completion';
-  provider: 'anthropic';
-  stepNumber?: number;
-  data: any;
-  originalMessage: string;
-  category: string;
-}
-
 export function createAnthropicLogger(send: SendFn) {
-  let stepCounter = 0;
 
   return (logLine: LogLine) => {
     const msg = (logLine?.message ?? "").toString();
-    const originalMessage = logLine?.message ?? "";
     const category = logLine?.category ?? "";
 
     if (category !== "agent") return;
 
-    // For Anthropic, we want to capture specific patterns:
-    // 1. Step execution
-    // 2. Processing blocks (contains actual tool calls)
-    // 3. Text blocks (contains thinking)
-    // 4. Errors
-    // 5. Completion messages
-
-    const isStepExecution = /Executing step \d+\/\d+/.test(msg);
-    const isProcessingBlock = originalMessage.startsWith('Processing block:');
-    const isTextBlock = msg.includes('Found text block:');
-    const isError = msg.includes('Error') || msg.includes('failed');
-    const isCompletion = msg.includes('completed') && msg.includes('total actions performed');
-    const isMetrics = msg.includes('metrics snapshot');
-
-    // Forward step execution
-    if (isStepExecution) {
-      const stepMatch = msg.match(/Executing step (\d+)\/(\d+)/);
-      const currentStep = stepMatch ? parseInt(stepMatch[1]) : ++stepCounter;
-      const totalSteps = stepMatch ? parseInt(stepMatch[2]) : 0;
-
-      const logEvent: AnthropicLogEvent = {
-        type: 'step_execution',
-        provider: 'anthropic',
-        stepNumber: currentStep,
-        data: {
-          stepExecution: {
-            current: currentStep,
-            total: totalSteps
-          }
-        },
-        originalMessage: msg,
-        category
-      };
-
-      send("anthropic_step", logEvent);
-      console.log(`[Anthropic Logger] Step execution:`, currentStep, '/', totalSteps);
-      return;
-    }
-
-    // Forward Processing blocks as structured events
-    if (isProcessingBlock) {
+    // Handle "Found tool_use block: {JSON}"
+    const toolUseMatch = msg.match(/^Found tool_use block:\s*([\s\S]*)/);
+    if (toolUseMatch) {
       try {
-        const jsonMatch = originalMessage.match(/Processing block:\s*({[\s\S]*?})/);
-        if (jsonMatch) {
-          const blockData = JSON.parse(jsonMatch[1]);
-          
-          const logEvent: AnthropicLogEvent = {
-            type: 'processing_block',
-            provider: 'anthropic',
-            stepNumber: ++stepCounter,
-            data: {
-              processingBlock: blockData,
-              toolUse: blockData.type === 'tool_use' ? {
-                id: blockData.id,
-                name: blockData.name,
-                input: blockData.input
-              } : undefined
-            },
-            originalMessage,
-            category
-          };
-
-          send("anthropic_step", logEvent);
-          console.log(`[Anthropic Logger] Processing block:`, blockData.type, blockData.id || 'no-id');
-          return;
-        }
-      } catch (e) {
-        console.error('Failed to parse Processing block JSON:', e);
+        const toolData = JSON.parse(toolUseMatch[1]);
+        // Send as pure JSON for parseLog to handle
+        const message = JSON.stringify({
+          type: "tool_use",
+          id: toolData.id,
+          name: toolData.name,
+          input: toolData.input
+        });
+        
+        console.log("[Anthropic Logger] Sending tool_use:", message);
+        send("log", {
+          ...logLine,
+          message,
+          provider: "anthropic",
+          type: "tool_use"
+        });
+        return;
+      } catch (error) {
+        console.error("[Anthropic Logger] Error parsing tool_use block:", error);
       }
     }
 
-    // Forward text blocks (thinking content)
-    if (isTextBlock) {
-      const cleanMessage = msg.replace('Found text block: ', '');
+    // Handle "Found text block: {text}"
+    const textBlockMatch = msg.match(/^Found text block:\s*([\s\S]+)/);
+    if (textBlockMatch) {
+      const text = textBlockMatch[1].trim();
+      // Send as JSON for parseLog to handle
+      const message = JSON.stringify({
+        type: "text",
+        text: text
+      });
       
-      const logEvent: AnthropicLogEvent = {
-        type: 'text_block',
-        provider: 'anthropic',
-        stepNumber: ++stepCounter,
-        data: {
-          textBlock: {
-            content: cleanMessage,
-            type: 'thinking'
-          }
-        },
-        originalMessage: msg,
-        category
-      };
-
-      send("anthropic_step", logEvent);
-      console.log(`[Anthropic Logger] Text block:`, cleanMessage.substring(0, 50));
+      console.log("[Anthropic Logger] Sending text block:", message);
+      send("log", {
+        ...logLine,
+        message,
+        provider: "anthropic",
+        type: "text_block"
+      });
       return;
     }
 
-    // Forward errors with structured data
-    if (isError) {
-      let errorType: 'browser_session' | 'cursor_injection' | 'action_execution' | 'key_mapping' = 'action_execution';
-      let actionType: string | undefined;
-
-      if (msg.includes('Target page, context or browser has been closed')) {
-        errorType = 'browser_session';
-      } else if (msg.includes('Failed to inject cursor')) {
-        errorType = 'cursor_injection';
-      } else if (msg.includes('Unknown key')) {
-        errorType = 'key_mapping';
-        const keyMatch = msg.match(/Unknown key: "([^"]+)"/);
-        actionType = keyMatch ? keyMatch[1] : undefined;
-      } else if (msg.includes('Error executing action')) {
-        const actionMatch = msg.match(/Error executing action (\w+):/);
-        actionType = actionMatch ? actionMatch[1] : undefined;
-      }
-
-      const logEvent: AnthropicLogEvent = {
-        type: 'error',
-        provider: 'anthropic',
-        stepNumber: ++stepCounter,
-        data: {
-          error: {
-            type: errorType,
-            details: msg,
-            actionType
-          }
-        },
-        originalMessage: msg,
-        category
-      };
-
-      send("anthropic_step", logEvent);
-      console.log(`[Anthropic Logger] Error:`, errorType, actionType || '');
+    // Handle "Executing step X/Y"
+    const stepMatch = msg.match(/^Executing step\s+(\d+)\/(\d+)/);
+    if (stepMatch) {
+      const currentStep = parseInt(stepMatch[1]);
+      const totalSteps = parseInt(stepMatch[2]);
+      
+      send("log", {
+        ...logLine,
+        message: `Executing step ${currentStep}/${totalSteps}`,
+        provider: "anthropic",
+        type: "step_execution"
+      });
       return;
     }
 
-    // Forward completion
-    if (isCompletion) {
-      const logEvent: AnthropicLogEvent = {
-        type: 'completion',
-        provider: 'anthropic',
-        stepNumber: ++stepCounter,
-        data: {
-          completion: {
-            message: msg,
-            completed: true
-          }
-        },
-        originalMessage: msg,
-        category
-      };
-
-      send("anthropic_step", logEvent);
-      console.log(`[Anthropic Logger] Completion:`, msg.substring(0, 50));
+    // Handle completion messages
+    if (msg.includes('completed') && msg.includes('total actions performed')) {
+      send("log", {
+        ...logLine,
+        message: msg,
+        provider: "anthropic",
+        type: "completion"
+      });
       return;
     }
 
-    // Skip metrics and other technical logs
-    if (isMetrics || 
-        msg.includes('screenshot captured') ||
-        msg.includes('prepared input items') ||
-        msg.includes('step processed') ||
-        msg.includes('added computer tool result')) {
-      console.log(`[Anthropic Logger] Skip technical:`, msg.substring(0, 50));
+    // Handle errors
+    if (msg.toLowerCase().includes('error') || msg.includes('failed')) {
+      send("log", {
+        ...logLine,
+        message: msg,
+        provider: "anthropic",
+        type: "error"
+      });
       return;
     }
 
-    // Log anything else we might have missed for debugging
-    console.log(`[Anthropic Logger] Unhandled message:`, msg.substring(0, 100));
+    // Skip technical noise
+    const isTechnicalNoise =
+      msg.includes('Processing tool use:') ||
+      msg.includes('Added tool_use item:') ||
+      msg.includes('Created action from tool_use:') ||
+      msg.includes('Computer action type:') ||
+      msg.includes('Taking action on') ||
+      msg.includes('Executing action:') ||
+      msg.includes('Taking screenshot') ||
+      msg.includes('Screenshot captured') ||
+      msg.includes('Added computer tool result') ||
+      msg.includes('Prepared') ||
+      msg.includes('Received response') ||
+      msg.includes('Step processed') ||
+      msg.includes('Starting Anthropic agent') ||
+      msg.includes('metrics snapshot');
+
+    if (isTechnicalNoise) {
+      return;
+    }
+
+    // Log any unhandled messages for debugging
+    console.log("[Anthropic Logger] Unhandled:", msg.substring(0, 100));
   };
 }

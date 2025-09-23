@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
       let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
       timeoutTimer = setTimeout(async () => {
-          console.log(`[SSE-Gemini] Timeout reached for session ${sessionId}`);
+          console.log(`[SSE-Anthropic] Timeout reached for session ${sessionId}`);
           send("error", { message: "Agent run timed out after 10 minutes" });
           await cleanup();
       }, 10 * 60 * 1000);
@@ -136,7 +136,6 @@ export async function GET(request: Request) {
         const result = await agent.execute({
           instruction: goal,
           autoScreenshot: true,
-          waitBetweenActions: 200,
           maxSteps: 100,
         });
 

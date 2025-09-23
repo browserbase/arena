@@ -1,6 +1,5 @@
 import { RefObject } from "react";
 import { BrowserStep } from "@/app/types/ChatFeed";
-import ChatMessage from "./ChatMessage";
 import ChatMessageOpenAI from "./messages/ChatMessageOpenAI";
 import ChatMessageAnthropic from "./messages/ChatMessageAnthropic";
 import ChatMessageGemini from "./messages/ChatMessageGemini";
@@ -45,9 +44,6 @@ export default function ChatMessagesList({
         return <ChatMessageAnthropic {...props} />;
       case "gemini":
         return <ChatMessageGemini {...props} />;
-      default:
-        // Fallback to original ChatMessage for backwards compatibility
-        return <ChatMessage {...props} />;
     }
   };
 

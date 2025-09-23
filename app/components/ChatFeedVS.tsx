@@ -12,9 +12,11 @@ import PinnedGoalMessage from "./chat/PinnedGoalMessage";
 import ChatMessagesList from "./chat/ChatMessagesList";
 import { SessionControls } from "./SessionControls";
 
-import { useAgentStreamByEndpoint } from "../hooks/useAgentStreamByEndpoint";
+import { useAgentStreamGoogle } from "../hooks/useAgentStreamGoogle";
+import { useAgentStreamAnthropic } from "../hooks/useAgentStreamAnthropic";
 import { ChatFeedProps, BrowserStep } from "../types/ChatFeed";
 import { SessionLiveURLs } from "@browserbasehq/sdk/resources/index.mjs";
+import { useAgentStreamOpenAI } from "../hooks/useAgentStreamOpenAI";
 
 type RightProvider = "openai" | "anthropic";
 
@@ -92,15 +94,24 @@ function AgentPanel({
     setHasEnded(true);
   }, [title]);
 
-  const { sessionId, sessionUrl, connectUrl, steps, isFinished } =
-    useAgentStreamByEndpoint({
-      endpoint,
-      sessionId: providedSessionId,
-      goal,
-      onStart: handleStart,
-      onDone: handleDone,
-      onError: handleError,
-    });
+  const agentHooks = {
+    gemini: useAgentStreamGoogle,
+    anthropic: useAgentStreamAnthropic,
+    openai: useAgentStreamOpenAI,
+  } as const;
+
+  if (!provider) {
+    throw new Error(`Unknown provider: ${provider}`);
+  }
+
+  const useAgentStream = agentHooks[provider];
+  const { sessionId, sessionUrl, connectUrl, steps, isFinished } = useAgentStream({
+    sessionId: providedSessionId,
+    goal: providedSessionId ? goal : null, // Only pass goal if we have a sessionId
+    onStart: handleStart,
+    onDone: handleDone,
+    onError: handleError,
+  });
 
   const agentFinished = isFinished || hasEnded;
   const activePageUrl = activePage?.debuggerFullscreenUrl ?? activePage?.debuggerUrl ?? null;

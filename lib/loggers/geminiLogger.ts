@@ -2,108 +2,88 @@ import { type LogLine } from "@browserbasehq/stagehand";
 
 type SendFn = (event: string, data: unknown) => void;
 
-export function createGeminiLogger(send: SendFn) {
+export function createGeminiLogger(
+  send: SendFn,
+  options?: { forwardStepEvents?: boolean }
+) {
+  const forwardSteps = options?.forwardStepEvents ?? false;
+
   return (logLine: LogLine) => {
-    const msg = (logLine?.message ?? "").toString();
+    const msg = (logLine?.message ?? "").toString().toLowerCase();
     const category = logLine?.category ?? "";
 
     if (category !== "agent") return;
 
-    // For Gemini, we want to capture:
-    // 1. Step execution
-    // 2. Function calls with args
-    // 3. Raw responses with thought signatures
-    // 4. Reasoning content
-    // 5. Errors
-    // 6. Completion messages
+    const isNavigation = msg.includes("navigating to") || msg.includes("going to") || msg.includes("visiting");
+    const isClick = msg.includes("clicking") && !msg.includes("tool_use");
+    const isTyping = msg.includes("typing") || msg.includes("entering text");
+    const isExtraction = msg.includes("extracting") || msg.includes("found") || msg.includes("retrieved");
+    const isWaiting = msg.includes("waiting for") && !msg.includes("screenshot");
 
-    const isStepExecution = /Executing step \d+\/\d+/.test(msg);
-    const isFunctionCall = /Found function call:\s*[a-z0-9_]+\s+(?:with args:)?/i.test(msg);
-    const isRawResponse = msg.includes('Raw response from Google:') || msg.includes('raw response from google:');
-    const isReasoning = msg.includes('reasoning:') || msg.startsWith('💭');
-    const isError = msg.includes('Error') || msg.includes('failed') || msg.includes('Unknown key');
-    const isCompletion = msg.includes('completed') && msg.includes('total actions performed');
-    const isThoughtSignature = msg.includes('thoughtsignature');
+    const isStepProgress = /step\s+\d+/i.test(msg) && (msg.includes("starting") || msg.includes("executing step"));
+    const isCompletion = msg.includes("completed") && !msg.includes("tool_use");
 
-    // Forward step execution
-    if (isStepExecution) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "gemini",
-        type: "step_execution"
-      });
+    const isKeyReasoning = msg.includes("reasoning:") && (
+      msg.includes("need to") ||
+      msg.includes("will") ||
+      msg.includes("found") ||
+      msg.includes("see") ||
+      msg.includes("notice")
+    );
+
+    const isError = msg.includes("error") || msg.includes("failed") || msg.includes("unable");
+
+    // Forward actual toolcall lines so the UI can parse actionName/actionArgs
+    const isFunctionCall = /found\s+function\s+call:\s*[a-z0-9_]+\s+(?:with\s+args:)?/i.test(msg);
+
+    const isTechnical =
+      msg.includes("tool_use") ||
+      msg.includes("function response") ||
+      msg.includes("screenshot") ||
+      msg.includes("converted to") ||
+      msg.includes("added tool") ||
+      msg.includes("created action from") ||
+      msg.includes("computer action type") ||
+      (msg.includes("processed") && msg.includes("items"));
+
+    const shouldForward = !isTechnical && (
+      isNavigation ||
+      isClick ||
+      isTyping ||
+      isExtraction ||
+      isWaiting ||
+      isStepProgress ||
+      isCompletion ||
+      isKeyReasoning ||
+      isError ||
+      isFunctionCall
+    );
+
+    if (!shouldForward) {
+      console.log(`[Gemini Logger] skip log`, { message: msg });
       return;
     }
 
-    // Forward function calls (these contain the actual tool call data for Gemini)
-    if (isFunctionCall) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "gemini",
-        type: "function_call"
-      });
-      return;
-    }
+    let cleanMessage = logLine.message;
+    cleanMessage = cleanMessage.replace(/^agent\s+\d+\s+/i, "");
+    cleanMessage = cleanMessage.replace(/^reasoning:\s*/i, "💭 ");
+    cleanMessage = cleanMessage.replace(/^executing step\s+(\d+).*?:/i, "Step $1:");
 
-    // Forward raw responses (contains thought signatures and function calls)
-    if (isRawResponse) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "gemini",
-        type: "raw_response"
-      });
-      return;
-    }
+    console.log(`[Gemini Logger] forward log`, { message: cleanMessage });
+    send("log", { ...logLine, message: cleanMessage });
 
-    // Forward reasoning
-    if (isReasoning) {
-      const cleanMessage = msg.replace(/^reasoning:\s*/i, "💭 ");
-      send("log", { 
-        ...logLine, 
-        message: cleanMessage, 
-        provider: "gemini",
-        type: "reasoning"
-      });
-      return;
+    if (forwardSteps) {
+      const isActionStep = isNavigation || isClick || isTyping || isExtraction || isWaiting || isStepProgress;
+      if (isActionStep) {
+        const stepMatch = cleanMessage.match(/Step (\d+):/i);
+        const stepIndex = stepMatch ? parseInt(stepMatch[1]) - 1 : 0;
+        send("step", {
+          stepIndex,
+          message: cleanMessage,
+          completed: isCompletion,
+        });
+      }
     }
-
-    // Forward errors
-    if (isError) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "gemini",
-        type: "error"
-      });
-      return;
-    }
-
-    // Forward completion
-    if (isCompletion) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "gemini",
-        type: "completion"
-      });
-      return;
-    }
-
-    // Skip purely technical logs
-    if (msg.includes('found 1 function calls') ||
-        msg.includes('converted to') ||
-        msg.includes('executing action') ||
-        msg.includes('skipping') ||
-        msg.includes('adding function responses') ||
-        msg.includes('screenshot after executing')) {
-      console.log(`[Gemini Logger] Skip technical:`, msg.substring(0, 50));
-      return;
-    }
-
-    // Log anything else we might have missed for debugging
-    console.log(`[Gemini Logger] Unhandled message:`, msg.substring(0, 100));
   };
 }
+
