@@ -233,18 +233,21 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
   const [sessions, setSessions] = useState<{ left: { id: string | null; url: string | null }; right: { id: string | null; url: string | null } }>({ left: { id: null, url: null }, right: { id: null, url: null } });
   const [sessionsInitialized, setSessionsInitialized] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const initializingSessionsRef = useRef(false);
   const goal = useMemo(() => initialMessage, [initialMessage]);
   const { width } = useWindowSize();
   const isMobile = width ? width < 768 : false;
 
   // Initialize both sessions in parallel
   useEffect(() => {
-    if (!goal || sessionsInitialized) return;
+    if (!goal || sessionsInitialized || initializingSessionsRef.current) return;
+
+    initializingSessionsRef.current = true;
 
     const initializeSessions = async () => {
       try {
         console.log("[ChatFeedVS] Initializing sessions in parallel...");
-        
+
         // Create both sessions simultaneously
         const [leftSessionResponse, rightSessionResponse] = await Promise.all([
           fetch("/api/session", {
@@ -299,10 +302,13 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
       } catch (error) {
         console.error("[ChatFeedVS] Failed to initialize sessions:", error);
         setSessionError(error instanceof Error ? error.message : "Failed to initialize sessions");
+        return;
+      } finally {
+        initializingSessionsRef.current = false;
       }
     };
 
-    initializeSessions();
+    void initializeSessions();
   }, [goal, rightProvider, sessionsInitialized]);
 
   // Spring configuration for smoother animations
