@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SessionControls } from "./SessionControls";
 import { RotateCcwIcon } from "lucide-react";
 
 interface BrowserSessionContainerProps {
@@ -10,8 +9,6 @@ interface BrowserSessionContainerProps {
   isVisible: boolean;
   isCompleted: boolean;
   initialMessage: string | undefined;
-  sessionTime?: number;
-  onStop?: () => void;
   onRestart?: () => void;
 }
 
@@ -103,8 +100,6 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
   isVisible,
   isCompleted,
   initialMessage,
-  sessionTime = 0,
-  onStop = () => {},
   onRestart = () => {},
 }) => {
   // Track the animation state of curtains
@@ -293,25 +288,6 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-          {/* Timer below iframe on desktop - always reserve the space */}
-          <div className="h-[42px] mt-4 hidden md:block">
-            {!isCompleted && sessionUrl && (
-              <motion.div
-                className="w-full flex justify-center items-center space-x-1 text-sm text-[#2E191E]"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                  delay: 1.5,
-                  duration: 0.5,
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 25,
-                }}
-              >
-                <SessionControls sessionTime={sessionTime} onStop={onStop} />
-              </motion.div>
-            )}
           </div>
         </motion.div>
       )}

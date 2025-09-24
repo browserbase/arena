@@ -10,7 +10,6 @@ import BrowserTabs from "./ui/BrowserTabs";
 import BrowserSessionContainer from "./BrowserSessionContainer";
 import PinnedGoalMessage from "./chat/PinnedGoalMessage";
 import ChatMessagesList from "./chat/ChatMessagesList";
-import { SessionControls } from "./SessionControls";
 
 import { useAgentStreamGoogle } from "../hooks/useAgentStreamGoogle";
 import { useAgentStreamAnthropic } from "../hooks/useAgentStreamAnthropic";
@@ -26,7 +25,7 @@ function AgentPanel({
   goal,
   sessionId: providedSessionId,
   initialSessionUrl,
-  onStopAll: _onStopAll, // eslint-disable-line @typescript-eslint/no-unused-vars
+  stopSignal,
   onRestartAll,
   className = "",
 }: {
@@ -35,7 +34,7 @@ function AgentPanel({
   goal: string | null;
   sessionId: string | null;
   initialSessionUrl?: string | null;
-  onStopAll: () => void;
+  stopSignal: number;
   onRestartAll: () => void;
   className?: string;
 }) {
@@ -47,10 +46,10 @@ function AgentPanel({
   }, [endpoint]);
 
   const [activePage, setActivePage] = useState<SessionLiveURLs.Page | null>(null);
-  const [sessionTime, setSessionTime] = useState(0);
   const [hasEnded, setHasEnded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const lastStopSignalRef = useRef(stopSignal);
   const { width } = useWindowSize();
   const isMobile = width ? width < 768 : false;
 
@@ -119,16 +118,6 @@ function AgentPanel({
   // Prefer initial session URL (from creation) to open curtains early; fallback to active page URL or hook sessionUrl
   const browserDisplayUrl = initialSessionUrl || activePageUrl || sessionUrl;
 
-  // Track session time
-  useEffect(() => {
-    let timer: number | undefined;
-    if (uiState.sessionId) {
-      setSessionTime(0);
-      timer = window.setInterval(() => setSessionTime((t) => t + 1), 1000);
-    }
-    return () => { if (timer) window.clearInterval(timer); };
-  }, [uiState.sessionId]);
-
   // Track scroll position to apply conditional margin
   useEffect(() => {
     const handleScroll = () => {
@@ -155,14 +144,20 @@ function AgentPanel({
     }));
   }, [sessionId, sessionUrl, connectUrl, steps]);
 
+  useEffect(() => {
+    if (stopSignal !== lastStopSignalRef.current) {
+      lastStopSignalRef.current = stopSignal;
+      if (stopSignal > 0 && !agentFinished) {
+        handleDone();
+      }
+    }
+  }, [stopSignal, handleDone, agentFinished]);
+
   return (
     <div className={`flex-1 flex flex-col min-w-0 ${className}`}>
       {/* Panel header */}
       <div className="px-4 py-3 border-b border-[#CAC8C7] bg-white flex items-center justify-between">
         <span className="font-ppsupply font-semibold text-[#2E191E] text-lg">{title}</span>
-        {!agentFinished && uiState.sessionId && !isMobile && (
-          <SessionControls sessionTime={sessionTime} onStop={handleDone} />
-        )}
       </div>
       
       {/* Panel content */}
@@ -183,20 +178,8 @@ function AgentPanel({
             isVisible={true}
             isCompleted={agentFinished}
             initialMessage={goal || undefined}
-            sessionTime={sessionTime}
-            onStop={handleDone}
             onRestart={onRestartAll}
           />
-
-          {/* Mobile session controls */}
-          {!agentFinished && isMobile && (
-            <div className="mt-4 flex justify-center items-center space-x-1 text-sm text-[#2E191E]">
-              <SessionControls
-                sessionTime={sessionTime}
-                onStop={handleDone}
-              />
-            </div>
-          )}
         </div>
 
         {/* Chat sidebar */}
@@ -233,10 +216,15 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
   const [sessions, setSessions] = useState<{ left: { id: string | null; url: string | null }; right: { id: string | null; url: string | null } }>({ left: { id: null, url: null }, right: { id: null, url: null } });
   const [sessionsInitialized, setSessionsInitialized] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [stopSignal, setStopSignal] = useState(0);
   const initializingSessionsRef = useRef(false);
   const goal = useMemo(() => initialMessage, [initialMessage]);
   const { width } = useWindowSize();
   const isMobile = width ? width < 768 : false;
+
+  const handleStopAllSessions = useCallback(() => {
+    setStopSignal((prev) => prev + 1);
+  }, []);
 
   // Initialize both sessions in parallel
   useEffect(() => {
@@ -284,6 +272,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
           left: { id: leftSessionData.sessionId, url: leftSessionData.sessionUrl ?? null },
           right: { id: rightSessionData.sessionId, url: rightSessionData.sessionUrl ?? null },
         });
+        setStopSignal(0);
         setSessionsInitialized(true);
         
         // Track the start event
@@ -372,13 +361,25 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
           transition={{ delay: 0.3 }}
         >
           {/* Model comparison header */}
-          <div className="flex items-center justify-center p-4 border-b border-[#CAC8C7] bg-gray-50">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between p-4 border-b border-[#CAC8C7] bg-gray-50">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
               <span className="font-ppsupply font-semibold text-[#2E191E]">Model Comparison</span>
               <div className="text-sm text-gray-600 font-ppsupply">
                 Watch both agents tackle the same task simultaneously
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleStopAllSessions}
+              disabled={!sessionsInitialized || !!sessionError}
+              className={`px-3 py-1.5 text-sm font-ppsupply font-medium text-white transition-colors ${
+                !sessionsInitialized || !!sessionError
+                  ? "bg-[#FF3B00]/50 cursor-not-allowed"
+                  : "bg-[#FF3B00] hover:bg-[#E63500]"
+              }`}
+            >
+              Stop All Sessions
+            </button>
           </div>
           
           {/* Split view panels */}
@@ -418,7 +419,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
                   goal={goal}
                   sessionId={sessions.left.id}
                   initialSessionUrl={sessions.left.url}
-                  onStopAll={() => {}}
+                  stopSignal={stopSignal}
                   onRestartAll={onClose}
                   className="border-r border-[#CAC8C7]"
                 />
@@ -428,7 +429,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
                   goal={goal}
                   sessionId={sessions.right.id}
                   initialSessionUrl={sessions.right.url}
-                  onStopAll={() => {}}
+                  stopSignal={stopSignal}
                   onRestartAll={onClose}
                 />
               </>
