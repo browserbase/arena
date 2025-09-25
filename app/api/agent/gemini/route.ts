@@ -124,7 +124,7 @@ export async function GET(request: Request) {
         send("start", {
           sessionId,
           goal,
-          model: "google/computer-use-exp-09-15",
+          model: "google/computer-use-preview-09-2025",
           init,
           startedAt: new Date().toISOString(),
           provider: "gemini",
@@ -132,7 +132,7 @@ export async function GET(request: Request) {
 
         const agent = stagehand.agent({
           provider: "google", 
-          model: "computer-use-exp-09-15",
+          model: "computer-use-preview-09-2025",
           options: {
             apiKey: process.env.GOOGLE_API_KEY,
           },

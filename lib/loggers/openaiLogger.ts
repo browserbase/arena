@@ -5,114 +5,121 @@ type SendFn = (event: string, data: unknown) => void;
 export function createOpenAILogger(send: SendFn) {
   return (logLine: LogLine) => {
     const msg = (logLine?.message ?? "").toString();
-    const originalMessage = logLine?.message ?? "";
     const category = logLine?.category ?? "";
 
     if (category !== "agent") return;
 
-    // For OpenAI, we want to capture:
-    // 1. Step execution
-    // 2. Computer calls and function calls
-    // 3. Reasoning content
-    // 4. Errors
-    // 5. Completion messages
-
-    const isStepExecution = /Executing step \d+\/\d+/.test(msg);
-    const isComputerCall = msg.includes('computer_call') || msg.includes('Computer action');
-    const isFunctionCall = /Found function call:|function_call/.test(msg);
-    const isReasoning = msg.includes('reasoning:') || msg.startsWith('💭');
-    const isError = msg.includes('Error') || msg.includes('failed');
-    const isCompletion = msg.includes('completed') && msg.includes('total actions performed');
-    const isResponseOutput = msg.includes('response output') || msg.includes('response with');
-
-    // Forward step execution
-    if (isStepExecution) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "openai",
-        type: "step_execution"
+    // Parse OpenAI's structured response format
+    
+    // 1. Step execution logs
+    const stepMatch = msg.match(/Executing step (\d+)\/(\d+)/);
+    if (stepMatch) {
+      send("step", {
+        stepNumber: parseInt(stepMatch[1]),
+        maxSteps: parseInt(stepMatch[2]),
+        message: msg,
       });
       return;
     }
 
-    // Forward computer calls
-    if (isComputerCall) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "openai",
-        type: "computer_call"
+    // 2. Reasoning logs
+    if (msg.startsWith("Reasoning:") || msg.includes("💭")) {
+      const reasoningText = msg.replace(/^Reasoning:\s*/i, "").replace(/^💭\s*/, "");
+      send("reasoning", {
+        content: reasoningText,
+        timestamp: Date.now(),
       });
       return;
     }
 
-    // Forward function calls
-    if (isFunctionCall) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "openai",
-        type: "function_call"
+    // 3. Computer call logs
+    const computerCallMatch = msg.match(/Found computer_call: (\w+), call_id: ([\w-]+)/);
+    if (computerCallMatch) {
+      send("tool", {
+        tool: "computer",
+        action: computerCallMatch[1],
+        callId: computerCallMatch[2],
+        type: "computer_call",
       });
       return;
     }
 
-    // Forward reasoning
-    if (isReasoning) {
-      const cleanMessage = msg.replace(/^reasoning:\s*/i, "💭 ");
-      send("log", { 
-        ...logLine, 
-        message: cleanMessage, 
-        provider: "openai",
-        type: "reasoning"
+    // Also handle converted computer calls
+    const convertedComputerMatch = msg.match(/Converted computer_call to action: (\w+)/);
+    if (convertedComputerMatch) {
+      // Skip these - they're redundant with the Found computer_call logs
+      return;
+    }
+
+    // Handle executing computer action logs
+    const executingComputerMatch = msg.match(/Executing computer action: (\w+)/);
+    if (executingComputerMatch) {
+      send("tool_execution", {
+        action: executingComputerMatch[1],
+        type: "computer",
       });
       return;
     }
 
-    // Forward response output info
-    if (isResponseOutput) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "openai",
-        type: "response_info"
+    // 4. Function call logs
+    const functionCallMatch = msg.match(/Found function_call: (\w+), call_id: ([\w-]+)/);
+    if (functionCallMatch) {
+      send("tool", {
+        tool: functionCallMatch[1],
+        callId: functionCallMatch[2],
+        type: "function_call",
       });
       return;
     }
 
-    // Forward errors
-    if (isError) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "openai",
-        type: "error"
+    // 5. Message text logs
+    if (msg.startsWith("Message text:")) {
+      const messageText = msg.replace(/^Message text:\s*/, "");
+      send("message", {
+        content: messageText,
+        timestamp: Date.now(),
       });
       return;
     }
 
-    // Forward completion
-    if (isCompletion) {
-      send("log", { 
-        ...logLine, 
-        message: msg, 
-        provider: "openai",
-        type: "completion"
+    // 6. Found message block (indicates a message is being processed)
+    if (msg === "Found message block") {
+      // Skip this - we'll handle actual message content
+      return;
+    }
+
+    // 7. Error logs
+    if (msg.includes("Error") && (msg.includes("executing") || msg.includes("parsing"))) {
+      send("agent_error", {
+        message: msg,
+        timestamp: Date.now(),
       });
       return;
     }
 
-    // Skip purely technical logs
+    // 8. Computer call output logs
+    const outputMatch = msg.match(/Added computer_call_output for call_id: ([\w-]+)/);
+    if (outputMatch) {
+      // Skip these technical logs
+      return;
+    }
+
+    // 9. Skip purely technical logs
     if (msg.includes('screenshot captured') ||
         msg.includes('prepared input items') ||
         msg.includes('response id') ||
-        msg.includes('usage:')) {
-      console.log(`[OpenAI Logger] Skip technical:`, msg.substring(0, 50));
+        msg.includes('usage:') ||
+        msg.includes('Converted function_call to action')) {
       return;
     }
 
-    // Log anything else we might have missed for debugging
-    console.log(`[OpenAI Logger] Unhandled message:`, msg.substring(0, 100));
+    // For any other agent logs that might be useful, forward them as generic logs
+    if (msg.trim()) {
+      console.log(`[OpenAI Logger] Forwarding generic log:`, msg.substring(0, 100));
+      send("log", { 
+        message: msg,
+        provider: "openai",
+      });
+    }
   };
 }

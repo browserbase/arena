@@ -145,7 +145,7 @@ export async function GET(request: Request) {
 
         const agent = stagehand.agent({
           provider: PROVIDER,
-          model: "computer-use-preview",
+          model: "computer-use-preview-2025-03-11",
           options: {
             apiKey: process.env.OPENAI_API_KEY,
           },

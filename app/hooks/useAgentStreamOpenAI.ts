@@ -59,30 +59,7 @@ export function useAgentStreamOpenAI({
     }));
   }, []);
 
-  const parseLog = useCallback((raw: string): AgentLog | null => {
-    const execMatch = raw.match(/^Executing step\s+(\d+)/i);
-    if (execMatch) {
-      return { kind: "summary", step: parseInt(execMatch[1], 10), text: "" };
-    }
-    // Function call lines, optionally without args, and possibly multi-line JSON
-    const fnMatch = raw.match(/^Found function call:\s*([A-Za-z0-9_]+)(?:\s+with args:\s*([\s\S]+))?$/i);
-    if (fnMatch) {
-      let args: unknown = {};
-      const jsonText = (fnMatch[2] || "").trim();
-      if (jsonText) {
-        try {
-          args = JSON.parse(jsonText);
-        } catch {
-          args = jsonText; // keep raw if not valid JSON
-        }
-      }
-      return { kind: "action", step: stepCounterRef.current, tool: fnMatch[1], args };
-    }
-    return null;
-  }, []);
-
-  const isPlainObject = useCallback((v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v), []);
-  const isEmptyObject = useCallback((v: unknown) => isPlainObject(v) && Object.keys(v as Record<string, unknown>).length === 0, [isPlainObject]);
+  const currentStepRef = useRef<BrowserStep | null>(null);
 
   useEffect(() => {
     console.log(`[useAgentStream] useEffect triggered with goal: "${goal?.substring(0, 50)}..."`);
@@ -180,110 +157,191 @@ export function useAgentStreamOpenAI({
         }
       });
 
-    es.addEventListener("log", (e) => {
+    // Handle step events
+    es.addEventListener("step", (e) => {
       if (cancelled) return;
       try {
-        const payload = JSON.parse((e as MessageEvent).data) as LogEvent;
-        const parsed = parseLog(payload.message);
-
+        const payload = JSON.parse((e as MessageEvent).data);
+        const stepNumber = payload.stepNumber;
+        
         setState((prev) => {
-          const newLogs = [...prev.logs, payload];
-          if (!parsed) {
-            return { ...prev, logs: newLogs };
+          stepCounterRef.current = stepNumber;
+          
+          // Create or get the current step
+          const existingIndex = prev.steps.findIndex((s) => s.stepNumber === stepNumber);
+          if (existingIndex >= 0) {
+            return prev; // Step already exists
           }
-
-          if (parsed.kind === "summary") {
-            // If the first visible step starts at >1 (because step 1 was hidden),
-            // shift numbering so the first visible step is Step 1.
-            if (stepOffsetRef.current === 0 && prev.steps.length === 0 && parsed.step > 1) {
-              stepOffsetRef.current = parsed.step - 1;
-            }
-            const displayStep = Math.max(1, parsed.step - stepOffsetRef.current);
-            stepCounterRef.current = displayStep;
-
-            const trimmedText = (parsed.text || "").trim();
-
-            // Update existing step with matching number if present; else append
-            const existingIndex = prev.steps.findIndex((s) => s.stepNumber === displayStep);
-            if (existingIndex >= 0) {
-              const existing = prev.steps[existingIndex];
-              const existingText = (existing.text || "").trim();
-              // If text is identical, no change; otherwise update text/instruction
-              if (trimmedText && trimmedText !== existingText) {
-                const updated: BrowserStep = {
-                  ...existing,
-                  // Keep whatever tool it currently has (may have been upgraded to an action)
-                  text: parsed.text,
-                  instruction: parsed.text,
-                };
-                const newSteps = [...prev.steps];
-                newSteps[existingIndex] = updated;
-                return { ...prev, logs: newLogs, steps: newSteps };
-              }
-              return { ...prev, logs: newLogs };
-            }
-
-            const newStep: BrowserStep = {
-              stepNumber: displayStep,
-              text: parsed.text,
-              reasoning: "",
-              tool: "MESSAGE",
-              instruction: parsed.text,
-            };
-            return { ...prev, logs: newLogs, steps: [...prev.steps, newStep] };
-          }
-
-          if (parsed.kind === "action") {
-            const toolName = parsed.tool;
-            const tool: BrowserStep["tool"] = toolName; 
-
-            // Track invoked tool names (dedupe)
-            const nextInvoked = new Set(prev.invokedTools);
-            nextInvoked.add(toolName);
-
-            // Align action to adjusted step numbering
-            if (stepOffsetRef.current === 0 && prev.steps.length === 0 && parsed.step > 1) {
-              stepOffsetRef.current = parsed.step - 1;
-            }
-            const displayStep = Math.max(1, parsed.step - stepOffsetRef.current);
-
-            // Prefer updating the step with matching number; else update the last
-            const updated = (prev.steps.length > 0 ? prev.steps : []).map((s) => {
-              if (s.stepNumber !== displayStep) return s;
-              const sameTool = s.tool === tool;
-              const sameArgs = JSON.stringify(s.actionArgs) === JSON.stringify(parsed.args);
-              if (sameTool && sameArgs) return s;
-              return { ...s, tool, actionArgs: parsed.args };
-            });
-            // If there is no step to attach to, create one
-            const hasTarget = updated.length > 0 && updated.some((s) => s.stepNumber === displayStep);
-            if (!hasTarget) {
-              const newStep: BrowserStep = {
-                stepNumber: displayStep,
-                text: "",
-                reasoning: "",
-                tool,
-                instruction: "",
-                actionArgs: parsed.args,
-              };
-              return { ...prev, logs: newLogs, invokedTools: Array.from(nextInvoked), steps: [...prev.steps, newStep] };
-            }
-            return { ...prev, logs: newLogs, invokedTools: Array.from(nextInvoked), steps: updated };
-          }
-
-          return { ...prev, logs: newLogs };
+          
+          const newStep: BrowserStep = {
+            stepNumber,
+            text: "",
+            reasoning: "",
+            tool: "MESSAGE",
+            instruction: payload.message || "",
+          };
+          
+          currentStepRef.current = newStep;
+          return { ...prev, steps: [...prev.steps, newStep] };
         });
       } catch (err) {
-        console.error("Error parsing log event:", err);
-        setState((prev) => ({
-          ...prev,
-          logs: [...prev.logs, { message: String((e as MessageEvent).data) }],
-        }));
+        console.error("Error parsing step event:", err);
       }
     });
 
-    // Disable SSE 'step' duplication: logs already carry summary/action
-    es.addEventListener("step", () => {});
+    // Handle reasoning events
+    es.addEventListener("reasoning", (e) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse((e as MessageEvent).data);
+        
+        setState((prev) => {
+          const currentStep = stepCounterRef.current;
+          const updatedSteps = [...prev.steps];
+          const stepIndex = updatedSteps.findIndex(s => s.stepNumber === currentStep);
+          
+          if (stepIndex >= 0) {
+            updatedSteps[stepIndex] = {
+              ...updatedSteps[stepIndex],
+              reasoning: payload.content,
+            };
+          } else {
+            // Create a new step for the reasoning
+            const newStep: BrowserStep = {
+              stepNumber: currentStep,
+              text: "",
+              reasoning: payload.content,
+              tool: "MESSAGE",
+              instruction: "",
+            };
+            updatedSteps.push(newStep);
+          }
+          
+          return { ...prev, steps: updatedSteps };
+        });
+      } catch (err) {
+        console.error("Error parsing reasoning event:", err);
+      }
+    });
+
+    // Handle tool events (computer_call and function_call)
+    es.addEventListener("tool", (e) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse((e as MessageEvent).data);
+        
+        setState((prev) => {
+          const currentStep = stepCounterRef.current;
+          const nextInvoked = new Set(prev.invokedTools);
+          
+          // Determine the tool name
+          let toolName = payload.tool;
+          if (payload.type === "computer_call") {
+            toolName = "computer";
+          }
+          nextInvoked.add(toolName);
+          
+          // Build action args
+          const actionArgs: Record<string, any> = {};
+          if (payload.type === "computer_call") {
+            actionArgs.action = payload.action;
+            actionArgs.callId = payload.callId;
+          } else if (payload.type === "function_call") {
+            actionArgs.name = payload.tool;
+            actionArgs.callId = payload.callId;
+          }
+          
+          const updatedSteps = [...prev.steps];
+          const stepIndex = updatedSteps.findIndex(s => s.stepNumber === currentStep);
+          
+          if (stepIndex >= 0) {
+            updatedSteps[stepIndex] = {
+              ...updatedSteps[stepIndex],
+              tool: toolName,
+              actionArgs,
+            };
+          } else {
+            // Create a new step for the tool call
+            const newStep: BrowserStep = {
+              stepNumber: currentStep,
+              text: "",
+              reasoning: "",
+              tool: toolName,
+              instruction: "",
+              actionArgs,
+            };
+            updatedSteps.push(newStep);
+          }
+          
+          return { ...prev, steps: updatedSteps, invokedTools: Array.from(nextInvoked) };
+        });
+      } catch (err) {
+        console.error("Error parsing tool event:", err);
+      }
+    });
+
+    // Handle message events
+    es.addEventListener("message", (e) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse((e as MessageEvent).data);
+        
+        setState((prev) => {
+          const currentStep = stepCounterRef.current;
+          const updatedSteps = [...prev.steps];
+          const stepIndex = updatedSteps.findIndex(s => s.stepNumber === currentStep);
+          
+          if (stepIndex >= 0) {
+            updatedSteps[stepIndex] = {
+              ...updatedSteps[stepIndex],
+              text: payload.content,
+            };
+          } else {
+            // Create a new step for the message
+            const newStep: BrowserStep = {
+              stepNumber: currentStep,
+              text: payload.content,
+              reasoning: "",
+              tool: "MESSAGE",
+              instruction: "",
+            };
+            updatedSteps.push(newStep);
+          }
+          
+          return { ...prev, steps: updatedSteps };
+        });
+      } catch (err) {
+        console.error("Error parsing message event:", err);
+      }
+    });
+
+    // Handle generic log events
+    es.addEventListener("log", (e) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse((e as MessageEvent).data);
+        setState((prev) => ({
+          ...prev,
+          logs: [...prev.logs, payload],
+        }));
+      } catch (err) {
+        console.error("Error parsing log event:", err);
+      }
+    });
+
+    // Handle agent error events from the logger
+    es.addEventListener("agent_error", (e) => {
+      if (cancelled) return;
+      try {
+        const payload = JSON.parse((e as MessageEvent).data);
+        console.error("OpenAI agent error:", payload.message);
+        
+        // Could add error handling to UI here if needed
+        // For now, just log to console
+      } catch (err) {
+        console.error("Error parsing agent_error event:", err);
+      }
+    });
 
     es.addEventListener("metrics", (e) => {
       // Skip showing metrics to users - too technical
@@ -354,7 +412,7 @@ export function useAgentStreamOpenAI({
         eventSourceRef.current.close();
       }
     };
-  }, [sessionId, goal, parseLog, isEmptyObject]);
+  }, [sessionId, goal]);
 
   return {
     ...state,
