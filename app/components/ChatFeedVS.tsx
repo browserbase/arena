@@ -333,7 +333,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
       exit="exit"
     >
       <NavBar
-        title="VS Browser"
+        title="Browser Agent Comparison"
         showCloseButton={true}
         onClose={onClose}
         showGitHubButton={false}
@@ -414,7 +414,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
             ) : (
               <>
                 <AgentPanel
-                  title="Gemini"
+                  title="Google Computer Use"
                   endpoint="/api/agent/gemini"
                   goal={goal}
                   sessionId={sessions.left.id}
@@ -424,7 +424,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
                   className="border-r border-[#CAC8C7]"
                 />
                 <AgentPanel
-                  title={rightProvider === "openai" ? "OpenAI Computer Use" : "Claude 4 Sonnet"}
+                  title={rightProvider === "openai" ? "OpenAI Computer Use" : "Anthropic Computer Use (Claude 4 Sonnet)"}
                   endpoint={rightProvider === "openai" ? "/api/agent/openai" : "/api/agent/anthropic"}
                   goal={goal}
                   sessionId={sessions.right.id}

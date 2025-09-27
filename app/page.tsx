@@ -143,7 +143,7 @@ export default function Home() {
               <div className="p-8 md:p-10 lg:p-12 flex flex-col items-center gap-8 md:gap-10">
                 <div className="flex flex-col items-center gap-3 md:gap-5">
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-ppneue text-gray-900 text-center">
-                    VS Browser
+                    Browser Agent Comparison
                   </h1>
                   <p className="text-base md:text-lg font-ppsupply text-gray-500 text-center">
                     Compare AI models side-by-side as they browse the web.
@@ -153,7 +153,7 @@ export default function Home() {
                   <div className="flex items-center gap-4 p-4 bg-gray-50 border border-[#CAC8C7]">
                     <div className="flex items-center gap-2">
                       <span className="font-ppsupply text-sm text-[#2E191E] font-medium">Left:</span>
-                      <span className="px-3 py-1 bg-[#2E191E] text-white text-sm font-ppsupply">Gemini</span>
+                      <span className="px-3 py-1 bg-[#2E191E] text-white text-sm font-ppsupply">Google</span>
                     </div>
                     <div className="w-px h-6 bg-[#CAC8C7]"></div>
                     <div className="flex items-center gap-3">
