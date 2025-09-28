@@ -1,10 +1,10 @@
-import { RefObject } from "react";
+import { RefObject, useEffect } from "react";
 import { BrowserStep } from "@/app/types/ChatFeed";
 import ChatMessageOpenAI from "./messages/ChatMessageOpenAI";
 import ChatMessageAnthropic from "./messages/ChatMessageAnthropic";
-import ChatMessageGemini from "./messages/ChatMessageGemini";
+import ChatMessageGoogle from "./messages/ChatMessageGoogle";
 
-type Provider = "openai" | "anthropic" | "gemini";
+type Provider = "openai" | "anthropic" | "google";
 
 interface ChatMessagesListProps {
   steps: BrowserStep[];
@@ -42,8 +42,8 @@ export default function ChatMessagesList({
         return <ChatMessageOpenAI {...props} />;
       case "anthropic":
         return <ChatMessageAnthropic {...props} />;
-      case "gemini":
-        return <ChatMessageGemini {...props} />;
+      case "google":
+        return <ChatMessageGoogle {...props} />;
     }
   };
 

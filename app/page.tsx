@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import AnimatedButton from "./components/ui/AnimatedButton";
 import posthog from "posthog-js";
-import ChatFeedVS from "./components/ChatFeedVS";
+import ChatFeed from "./components/ChatFeed";
 import NavBar from "./components/NavBar";
 import { Code, MessageCircle, UtensilsCrossed, Search } from "lucide-react";
 
@@ -93,7 +93,7 @@ export default function Home() {
       setIsChatVisible(true);
 
       try {
-        posthog.capture("vs_browser_submit_message", {
+        posthog.capture("google_comparison_submit_message", {
           message: finalMessage,
           rightProvider,
         });
@@ -257,13 +257,13 @@ export default function Home() {
                     transition={{ duration: 0.3, delay: 0.5 }}
                     onClick={() =>
                       startChat(
-                        "Help me find a good restaurant in San Francisco that's open right now and has vegetarian options. Check their menu and tell me what they have."
+                        "Play a game of 2048 on https://www.2048.org/. Just try to win and I'll watch. Good luck!"
                       )
                     }
                     className="p-3 md:p-5 lg:p-6 text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal md:min-h-[100px] lg:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)] rounded-none"
                   >
                     <div className="w-full h-full flex flex-row justify-between items-start px-3 py-2 md:px-4 md:py-3 space-y-3">
-                      <span className="text-left">Find a<br />5 star restaurant in SF</span>
+                      <span className="text-left">Play a game of<br />2048</span>
                       <UtensilsCrossed size={20} strokeWidth={1.5} className="rounded-none" />
                     </div>
                   </motion.button>
@@ -337,7 +337,7 @@ export default function Home() {
           </main>
         </div>
       ) : (
-        <ChatFeedVS
+        <ChatFeed
           key={`chat-feed-vs-${initialMessage}-${rightProvider}`}
           initialMessage={initialMessage}
           rightProvider={rightProvider}

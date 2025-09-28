@@ -2,7 +2,7 @@ import { type LogLine } from "@browserbasehq/stagehand";
 
 type SendFn = (event: string, data: unknown) => void;
 
-export function createGeminiLogger(
+export function createGoogleLogger(
   send: SendFn,
   options?: { forwardStepEvents?: boolean }
 ) {
@@ -60,7 +60,7 @@ export function createGeminiLogger(
     );
 
     if (!shouldForward) {
-      console.log(`[Gemini Logger] skip log`, { message: msg });
+      console.log(`[Google Logger] skip log`, { message: msg });
       return;
     }
 
@@ -69,7 +69,7 @@ export function createGeminiLogger(
     cleanMessage = cleanMessage.replace(/^reasoning:\s*/i, "💭 ");
     cleanMessage = cleanMessage.replace(/^executing step\s+(\d+).*?:/i, "Step $1:");
 
-    console.log(`[Gemini Logger] forward log`, { message: cleanMessage });
+    console.log(`[Google Logger] forward log`, { message: cleanMessage });
     send("log", { ...logLine, message: cleanMessage });
 
     if (forwardSteps) {

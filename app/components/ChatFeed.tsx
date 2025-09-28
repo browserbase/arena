@@ -11,17 +11,17 @@ import BrowserSessionContainer from "./BrowserSessionContainer";
 import PinnedGoalMessage from "./chat/PinnedGoalMessage";
 import ChatMessagesList from "./chat/ChatMessagesList";
 
-import { useAgentStreamGoogle } from "../hooks/useAgentStreamGoogle";
-import { useAgentStreamAnthropic } from "../hooks/useAgentStreamAnthropic";
-import { ChatFeedProps, BrowserStep } from "../types/ChatFeed";
+import { useAgentStreamGoogle } from "@/app/hooks/useAgentStreamGoogle";
+import { useAgentStreamAnthropic } from "@/app/hooks/useAgentStreamAnthropic";
+import { ChatFeedProps, BrowserStep } from "@/app/types/ChatFeed";
 import { SessionLiveURLs } from "@browserbasehq/sdk/resources/index.mjs";
-import { useAgentStreamOpenAI } from "../hooks/useAgentStreamOpenAI";
+import { useAgentStreamOpenAI } from "@/app/hooks/useAgentStreamOpenAI";
 
 type RightProvider = "openai" | "anthropic";
 
 function AgentPanel({
   title,
-  endpoint,
+  provider,
   goal,
   sessionId: providedSessionId,
   initialSessionUrl,
@@ -30,7 +30,7 @@ function AgentPanel({
   className = "",
 }: {
   title: string;
-  endpoint: string;
+  provider: string;
   goal: string | null;
   sessionId: string | null;
   initialSessionUrl?: string | null;
@@ -38,12 +38,9 @@ function AgentPanel({
   onRestartAll: () => void;
   className?: string;
 }) {
-  const provider = useMemo(() => {
-    if (endpoint.includes('/api/agent/openai')) return 'openai';
-    if (endpoint.includes('/api/agent/anthropic')) return 'anthropic';
-    if (endpoint.includes('/api/agent/gemini')) return 'gemini';
-    return undefined;
-  }, [endpoint]);
+  const providerType = useMemo(() => {
+    return provider as "openai" | "anthropic" | "google";
+  }, [provider]);
 
   const [activePage, setActivePage] = useState<SessionLiveURLs.Page | null>(null);
   const [hasEnded, setHasEnded] = useState(false);
@@ -67,7 +64,6 @@ function AgentPanel({
 
   const handleStart = useCallback(
     (data: { sessionId: string }) => {
-      console.log(`[AgentPanel-${title}] Agent started with session: ${data.sessionId}`);
       setHasEnded(false);
       setUiState((prev) => ({ ...prev, sessionId: data.sessionId }));
     },
@@ -75,7 +71,6 @@ function AgentPanel({
   );
 
   const handleDone = useCallback(() => {
-    console.log(`[AgentPanel-${title}] Agent finished`);
     setHasEnded(true);
     if (uiState.sessionId) {
       fetch("/api/session", {
@@ -83,7 +78,7 @@ function AgentPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: uiState.sessionId }),
       }).catch((error) => {
-        console.log(`[AgentPanel-${title}] Error during session termination (can be ignored):`, error);
+        console.error(`[AgentPanel-${title}] Error during session termination (can be ignored):`, error);
       });
     }
   }, [uiState.sessionId, title]);
@@ -94,22 +89,23 @@ function AgentPanel({
   }, [title]);
 
   const agentHooks = {
-    gemini: useAgentStreamGoogle,
+    google: useAgentStreamGoogle,
     anthropic: useAgentStreamAnthropic,
     openai: useAgentStreamOpenAI,
   } as const;
 
-  if (!provider) {
-    throw new Error(`Unknown provider: ${provider}`);
+  if (!providerType) {
+    throw new Error(`Unknown provider: ${providerType}`);
   }
 
-  const useAgentStream = agentHooks[provider];
+  const useAgentStream = agentHooks[providerType];
   const { sessionId, sessionUrl, connectUrl, steps, isFinished } = useAgentStream({
     sessionId: providedSessionId,
     goal: providedSessionId ? goal : null, // Only pass goal if we have a sessionId
     onStart: handleStart,
     onDone: handleDone,
     onError: handleError,
+    provider: providerType,
   });
 
   const agentFinished = isFinished || hasEnded;
@@ -156,14 +152,14 @@ function AgentPanel({
   return (
     <div className={`flex-1 flex flex-col min-w-0 ${className}`}>
       {/* Panel header */}
-      <div className="px-4 py-3 border-b border-[#CAC8C7] bg-white flex items-center justify-between">
-        <span className="font-ppsupply font-semibold text-[#2E191E] text-lg">{title}</span>
+      <div className="px-3 py-2 border-b border-[#CAC8C7] bg-white flex items-center justify-between">
+        <span className="font-ppsupply font-semibold text-[#2E191E] text-base">{title}</span>
       </div>
       
       {/* Panel content */}
       <div className="flex flex-col md:flex-row h-full overflow-hidden">
         {/* Browser area */}
-        <div className="w-full md:flex-[3] p-4 md:p-6 order-first md:order-last flex flex-col items-center justify-center bg-white">
+        <div className="w-full md:flex-[3] p-2 md:p-3 order-first md:order-last flex flex-col items-center justify-center bg-white">
           {/* Tabs */}
           {!agentFinished && uiState.sessionId && (
             <BrowserTabs
@@ -184,11 +180,11 @@ function AgentPanel({
 
         {/* Chat sidebar */}
         <div
-          className="w-full md:w-[350px] min-w-0 md:min-w-[280px] px-4 pb-4 md:px-6 md:pb-6 border-r border-[#CAC8C7] flex flex-col flex-1 overflow-hidden"
+          className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-3 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1 overflow-hidden"
           style={{
             height: isMobile
-              ? "calc(100vh - 300px)"
-              : "calc(100vh - 12rem)",
+              ? "calc(100vh - 280px)"
+              : "calc(100vh - 8rem)",
             position: "relative",
           }}
         >
@@ -204,7 +200,7 @@ function AgentPanel({
             steps={uiState.steps}
             chatContainerRef={chatContainerRef}
             isMobile={isMobile}
-            provider={provider}
+            provider={providerType}
           />
         </div>
       </div>
@@ -212,7 +208,7 @@ function AgentPanel({
   );
 }
 
-export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "openai" }: ChatFeedProps & { rightProvider?: RightProvider }) {
+export default function ChatFeed({ initialMessage, onClose, rightProvider = "openai" }: ChatFeedProps & { rightProvider?: RightProvider }) {
   const [sessions, setSessions] = useState<{ left: { id: string | null; url: string | null }; right: { id: string | null; url: string | null } }>({ left: { id: null, url: null }, right: { id: null, url: null } });
   const [sessionsInitialized, setSessionsInitialized] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -234,8 +230,6 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
 
     const initializeSessions = async () => {
       try {
-        console.log("[ChatFeedVS] Initializing sessions in parallel...");
-
         // Create both sessions simultaneously
         const [leftSessionResponse, rightSessionResponse] = await Promise.all([
           fetch("/api/session", {
@@ -263,10 +257,10 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
           throw new Error("Failed to create sessions");
         }
 
-        console.log("[ChatFeedVS] Both sessions created:", {
-          left: leftSessionData.sessionId,
-          right: rightSessionData.sessionId
-        });
+        // console.log("[ChatFeed] Both sessions created:", {
+        //   left: leftSessionData.sessionId,
+        //   right: rightSessionData.sessionId
+        // });
 
         setSessions({
           left: { id: leftSessionData.sessionId, url: leftSessionData.sessionUrl ?? null },
@@ -277,7 +271,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
         
         // Track the start event
         try {
-          posthog.capture("vs_run_start", { 
+          posthog.capture("google_comparison_start", { 
             goal: goal?.substring(0, 100), 
             rightProvider,
             leftSessionId: leftSessionData.sessionId,
@@ -289,7 +283,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
         }
 
       } catch (error) {
-        console.error("[ChatFeedVS] Failed to initialize sessions:", error);
+        console.error("[ChatFeed] Failed to initialize sessions:", error);
         setSessionError(error instanceof Error ? error.message : "Failed to initialize sessions");
         return;
       } finally {
@@ -339,7 +333,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
         showGitHubButton={false}
       />
       <main
-        className="flex-1 flex flex-col items-center sm:p-4 md:p-6 relative overflow-hidden"
+        className="flex-1 flex flex-col items-center sm:p-2 md:p-3 relative overflow-hidden"
         style={{ backgroundColor: "#FCFCFC" }}
       >
         <div
@@ -354,16 +348,16 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
           }}
         ></div>
         <motion.div
-          className="w-full max-w-[95vw] bg-white md:border border-[#CAC8C7] shadow-sm overflow-hidden mx-auto relative z-10"
-          style={{ height: isMobile ? "calc(100vh - 56px)" : "auto" }}
+          className="w-full max-w-[98vw] bg-white md:border border-[#CAC8C7] shadow-sm overflow-hidden mx-auto relative z-10"
+          style={{ height: isMobile ? "calc(100vh - 56px)" : "calc(100vh - 100px)" }}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
           {/* Model comparison header */}
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between p-4 border-b border-[#CAC8C7] bg-gray-50">
-            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-              <span className="font-ppsupply font-semibold text-[#2E191E]">Model Comparison</span>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between p-3 border-b border-[#CAC8C7] bg-gray-50">
+            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
+              <span className="font-ppsupply font-semibold text-[#2E191E] text-base">Model Comparison</span>
               <div className="text-sm text-gray-600 font-ppsupply">
                 Watch both agents tackle the same task simultaneously
               </div>
@@ -385,7 +379,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
           {/* Split view panels */}
           <div 
             className="flex flex-col md:flex-row" 
-            style={{ height: isMobile ? "calc(100vh - 140px)" : "calc(100vh - 140px)" }}
+            style={{ height: isMobile ? "calc(100vh - 120px)" : "calc(100vh - 110px)" }}
           >
             {sessionError ? (
               <div className="flex-1 flex items-center justify-center p-8">
@@ -415,7 +409,7 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
               <>
                 <AgentPanel
                   title="Google Computer Use"
-                  endpoint="/api/agent/gemini"
+                  provider="google"
                   goal={goal}
                   sessionId={sessions.left.id}
                   initialSessionUrl={sessions.left.url}
@@ -424,8 +418,8 @@ export default function ChatFeedVS({ initialMessage, onClose, rightProvider = "o
                   className="border-r border-[#CAC8C7]"
                 />
                 <AgentPanel
-                  title={rightProvider === "openai" ? "OpenAI Computer Use" : "Anthropic Computer Use (Claude 4 Sonnet)"}
-                  endpoint={rightProvider === "openai" ? "/api/agent/openai" : "/api/agent/anthropic"}
+                  title={rightProvider === "openai" ? "OpenAI Computer Use" : "Anthropic Computer Use (Claude Sonnet 4)"}
+                  provider={rightProvider}
                   goal={goal}
                   sessionId={sessions.right.id}
                   initialSessionUrl={sessions.right.url}

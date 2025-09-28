@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { BrowserStep } from "../types/ChatFeed";
-import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "../types/Agent";
+import { BrowserStep } from "@/app/types/ChatFeed";
+import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "@/app/types/Agent";
 
 // Global trackers to avoid duplicate session creation in React Strict Mode
 // by sharing a single in-flight promise across mounts for the same goal.
@@ -17,7 +17,8 @@ export function useAgentStreamOpenAI({
   onStart,
   onDone,
   onError,
-}: UseAgentStreamProps) {
+  provider = "openai",
+}: UseAgentStreamProps & { provider?: string }) {
   console.log(`[useAgentStream] Hook called with goal: "${goal?.substring(0, 50)}...", sessionId: ${sessionId}`);
   const [state, setState] = useState<AgentStreamState>({
     sessionId: sessionId,
@@ -138,7 +139,7 @@ export function useAgentStreamOpenAI({
         goal,
       });
 
-      const es = new EventSource(`/api/agent/openai?${params.toString()}`);
+      const es = new EventSource(`/api/agent?${params.toString()}&provider=${provider}`);
       eventSourceRef.current = es;
 
       // Add event listeners

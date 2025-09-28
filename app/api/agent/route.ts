@@ -1,15 +1,44 @@
 import { Stagehand } from "@browserbasehq/stagehand";
 import { createAnthropicLogger } from "@/lib/loggers/anthropicLogger";
-import { AGENT_INSTRUCTIONS } from "@/app/constants/prompt";
+import { createGoogleLogger } from "@/lib/loggers/googleLogger";
+import { createOpenAILogger } from "@/lib/loggers/openaiLogger";
 import { sseComment, sseEncode } from "@/lib/agent/utils";
+import { AGENT_INSTRUCTIONS } from "@/app/constants/prompt";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 600;
 
+const PROVIDER_CONFIGS = {
+  anthropic: {
+    model: "claude-sonnet-4-20250514",
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+    logger: createAnthropicLogger,
+    stagehandModel: "anthropic",
+  },
+  google: {
+    model: "computer-use-preview-09-2025",
+    apiKey: process.env.GOOGLE_API_KEY!,
+    logger: createGoogleLogger,
+    stagehandModel: "google",
+  },
+  openai: {
+    model: "computer-use-preview-2025-03-11",
+    apiKey: process.env.OPENAI_API_KEY!,
+    logger: createOpenAILogger,
+    stagehandModel: "openai",
+  },
+} as const;
+
+type Provider = keyof typeof PROVIDER_CONFIGS;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const [sessionId, goal] = [searchParams.get("sessionId"), searchParams.get("goal")];
+  const [sessionId, goal, providerParam] = [
+    searchParams.get("sessionId"),
+    searchParams.get("goal"),
+    searchParams.get("provider"),
+  ];
 
   if (!sessionId || !goal) {
     return new Response(
@@ -21,19 +50,35 @@ export async function GET(request: Request) {
     );
   }
 
+  const provider = providerParam as Provider;
+  if (!provider || !PROVIDER_CONFIGS[provider]) {
+    return new Response(
+      JSON.stringify({
+        error: `Invalid provider: ${providerParam}. Must be one of: ${Object.keys(PROVIDER_CONFIGS).join(", ")}`
+      }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  const config = PROVIDER_CONFIGS[provider];
+  const logger = config.logger;
+
   let stagehandRef: Stagehand | undefined;
   const stream = new ReadableStream<Uint8Array>({
     start: async (controller) => {
       let keepAliveTimer: ReturnType<typeof setInterval> | undefined;
       keepAliveTimer = setInterval(() => {
-          safeEnqueue(sseComment("keepalive"));
+        safeEnqueue(sseComment("keepalive"));
       }, 15000);
 
       let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
       timeoutTimer = setTimeout(async () => {
-          console.log(`[SSE-Anthropic] Timeout reached for session ${sessionId}`);
-          send("error", { message: "Agent run timed out after 10 minutes" });
-          await cleanup();
+        console.log(`[SSE-${provider}] Timeout reached for session ${sessionId}`);
+        send("error", { message: "Agent run timed out after 10 minutes" });
+        await cleanup();
       }, 10 * 60 * 1000);
 
       let closed = false;
@@ -43,7 +88,7 @@ export async function GET(request: Request) {
         try {
           controller.enqueue(chunk);
         } catch (err) {
-          console.error(`[SSE-Anthropic] enqueue error`, err instanceof Error ? err.message : String(err));
+          console.error(`[SSE-${provider}] enqueue error`, err instanceof Error ? err.message : String(err));
         }
       };
 
@@ -52,38 +97,44 @@ export async function GET(request: Request) {
         try {
           safeEnqueue(sseEncode(event, data));
         } catch (err) {
-          console.error(`[SSE-Anthropic] send error`, err instanceof Error ? err.message : String(err));
+          console.error(`[SSE-${provider}] send error`, err instanceof Error ? err.message : String(err));
         }
       };
+
+      let viewportLockInterval: ReturnType<typeof setInterval> | undefined;
 
       const cleanup = async (stagehand?: Stagehand) => {
         if (closed) return;
         closed = true;
         if (keepAliveTimer) clearInterval(keepAliveTimer);
         if (timeoutTimer) clearTimeout(timeoutTimer);
+        if (viewportLockInterval) clearInterval(viewportLockInterval);
         try {
           if (stagehand && !stagehand.isClosed) {
             await stagehand.close();
           }
         } catch {
-          console.error(`[SSE-Anthropic] error closing stagehand`, stagehand);
+          console.error(`[SSE-${provider}] error closing stagehand`, stagehand);
         }
         controller.close();
       };
 
+      // Keep the connection alive for proxies
       keepAliveTimer = setInterval(() => {
         safeEnqueue(sseComment("keepalive"));
       }, 15000);
 
+      // Hard timeout at 10 minutes
       timeoutTimer = setTimeout(async () => {
-        console.log(`[SSE-Anthropic] Timeout reached for session ${sessionId}`);
+        console.log(`[SSE-${provider}] Timeout reached for session ${sessionId}`);
         send("error", { message: "Agent run timed out after 10 minutes" });
         await cleanup();
       }, 10 * 60 * 1000);
 
-      console.log(`[SSE-Anthropic] Starting Stagehand agent run`, {
+      console.log(`[SSE-${provider}] Starting Stagehand agent run`, {
         sessionId,
         goal,
+        provider,
         hasInstructions: true,
       });
 
@@ -107,28 +158,28 @@ export async function GET(request: Request) {
         useAPI: false,
         verbose: 2,
         disablePino: true,
-        logger: createAnthropicLogger(send),
+        logger: logger(send),
       });
       stagehandRef = stagehand;
 
       try {
         const init = await stagehand.init();
-        console.log(`[SSE-Anthropic] Stagehand initialized`, init);
+        console.log(`[SSE-${provider}] Stagehand initialized`, init);
 
         send("start", {
           sessionId,
           goal,
-          model: "anthropic",
+          model: config.model,
           init,
           startedAt: new Date().toISOString(),
-          provider: "anthropic",
+          provider,
         });
 
         const agent = stagehand.agent({
-          provider: "anthropic",
-          model: "claude-sonnet-4-20250514",
+          provider: provider === "anthropic" ? "anthropic" : provider === "google" ? "google" : "openai",
+          model: config.model,
           options: {
-            apiKey: process.env.ANTHROPIC_API_KEY,
+            apiKey: config.apiKey,
           },
           instructions: AGENT_INSTRUCTIONS,
         });
@@ -140,17 +191,17 @@ export async function GET(request: Request) {
         });
 
         try {
-          console.log(`[SSE-Anthropic] metrics snapshot`, stagehand.metrics);
+          console.log(`[SSE-${provider}] metrics snapshot`, stagehand.metrics);
           send("metrics", stagehand.metrics);
         } catch {}
 
-        console.log(`[SSE-Anthropic] done`, { success: result.success, completed: result.completed });
+        console.log(`[SSE-${provider}] done`, { success: result.success, completed: result.completed });
         send("done", result);
 
         await cleanup(stagehand);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.error(`[SSE-Anthropic] error`, message);
+        console.error(`[SSE-${provider}] error`, message);
         send("error", { message });
         await cleanup(stagehand);
       }
@@ -162,6 +213,7 @@ export async function GET(request: Request) {
         }
       } catch {
         // no-op
+        console.error(`[SSE-${provider}] error closing stagehand`, stagehandRef);
       }
     },
   });

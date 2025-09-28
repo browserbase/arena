@@ -25,7 +25,7 @@ export interface LogEvent {
   level?: number;
   category?: string;
   message: string;
-  provider?: "gemini" | "openai" | "anthropic";
+  provider?: "google" | "openai" | "anthropic";
 }
 
 export interface AgentStreamState {
@@ -46,7 +46,7 @@ export interface StartEventData {
   model?: string;
   init?: unknown;
   startedAt?: string;
-  provider?: "gemini" | "openai" | "anthropic";
+  provider?: "google" | "openai" | "anthropic";
 }
 
 export interface DoneEventData {
