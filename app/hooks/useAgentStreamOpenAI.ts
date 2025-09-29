@@ -59,8 +59,6 @@ export function useAgentStreamOpenAI({
     }));
   }, []);
 
-  const currentStepRef = useRef<BrowserStep | null>(null);
-
   useEffect(() => {
     console.log(`[useAgentStream] useEffect triggered with goal: "${goal?.substring(0, 50)}..."`);
     if (!goal) {
