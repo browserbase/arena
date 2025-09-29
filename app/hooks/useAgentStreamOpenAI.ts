@@ -163,27 +163,7 @@ export function useAgentStreamOpenAI({
       try {
         const payload = JSON.parse((e as MessageEvent).data);
         const stepNumber = payload.stepNumber;
-        
-        setState((prev) => {
-          stepCounterRef.current = stepNumber;
-          
-          // Create or get the current step
-          const existingIndex = prev.steps.findIndex((s) => s.stepNumber === stepNumber);
-          if (existingIndex >= 0) {
-            return prev; // Step already exists
-          }
-          
-          const newStep: BrowserStep = {
-            stepNumber,
-            text: "",
-            reasoning: "",
-            tool: "MESSAGE",
-            instruction: payload.message || "",
-          };
-          
-          currentStepRef.current = newStep;
-          return { ...prev, steps: [...prev.steps, newStep] };
-        });
+        stepCounterRef.current = stepNumber;
       } catch (err) {
         console.error("Error parsing step event:", err);
       }
