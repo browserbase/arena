@@ -1,4 +1,4 @@
-import { RefObject, useEffect } from "react";
+import { RefObject, useRef } from "react";
 import { BrowserStep } from "@/app/types/ChatFeed";
 import ChatMessageOpenAI from "./messages/ChatMessageOpenAI";
 import ChatMessageAnthropic from "./messages/ChatMessageAnthropic";
@@ -19,6 +19,10 @@ export default function ChatMessagesList({
   isMobile,
   provider,
 }: ChatMessagesListProps) {
+  // Track previous steps length to detect new messages
+  const prevStepsLength = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   // Filter out empty first steps
   const filteredSteps = steps.filter((step, index) => {
     // Hide first step if it's empty or placeholder
@@ -47,9 +51,26 @@ export default function ChatMessagesList({
     }
   };
 
+  // Auto-scroll when new messages appear
+  const handleContainerRef = (node: HTMLDivElement | null) => {
+    if (chatContainerRef) {
+      (chatContainerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    }
+    containerRef.current = node;
+    
+    // Scroll to bottom when new messages are added
+    if (node && filteredSteps.length > prevStepsLength.current) {
+      requestAnimationFrame(() => {
+        node.scrollTop = node.scrollHeight;
+      });
+    }
+    
+    prevStepsLength.current = filteredSteps.length;
+  };
+
   return (
     <div
-      ref={chatContainerRef}
+      ref={handleContainerRef}
       className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 hide-scrollbar"
       style={{
         height: isMobile
@@ -62,7 +83,9 @@ export default function ChatMessagesList({
       {filteredSteps.map((step, index) => 
         getChatMessageComponent(step, index, filteredSteps.slice(0, index))
       )}
-
+      
+      {/* Extra padding at bottom to ensure last message is fully visible */}
+      <div style={{ height: '60px' }} />
     </div>
   );
 }
