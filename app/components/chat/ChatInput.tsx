@@ -34,7 +34,7 @@ export default function ChatInput({
           console.log("Animation complete, focusing input");
         }
       }}
-      onSubmit={async (e) => {
+      onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (["quit", "exit", "bye"].includes(userInput.toLowerCase())) {
           // This should be handled by the parent component

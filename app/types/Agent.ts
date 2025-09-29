@@ -1,4 +1,4 @@
-import { BrowserStep } from "./ChatFeed";
+import { ActionArgs, BrowserStep } from "./ChatFeed";
 
 type AgentThoughtLog = {
   kind: "thought";
@@ -15,7 +15,7 @@ type AgentActionLog = {
   kind: "action";
   step: number;
   tool: string;
-  args: unknown;
+  args: ActionArgs;
 };
 
 export type AgentLog = AgentThoughtLog | AgentSummaryLog | AgentActionLog;

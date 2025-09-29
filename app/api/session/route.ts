@@ -81,11 +81,12 @@ async function createSession(timezone?: string) {
     apiKey: process.env.BROWSERBASE_API_KEY!,
   });
 
-  const browserSettings: any = {
+  const browserSettings: Browserbase.Sessions.SessionCreateParams.BrowserSettings = {
     viewport: {
       width: 2560,
       height: 1440,
     },
+    // @ts-expect-error - os is not a valid property
     os: "windows",
     blockAds: true,
     advancedStealth: true

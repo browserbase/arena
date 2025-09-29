@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { BrowserStep } from "@/app/types/ChatFeed";
+import { ActionArgs, BrowserStep } from "@/app/types/ChatFeed";
 import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "@/app/types/Agent";
 
 // Global trackers to avoid duplicate session creation in React Strict Mode
@@ -92,13 +92,13 @@ export function useAgentStreamAnthropic({
       }
       const fnMatch = raw.match(/^Found function call:\s*([A-Za-z0-9_]+)(?:\s+with args:\s*([\s\S]+))?$/i);
       if (fnMatch) {
-        let args: unknown = {};
+        let args: ActionArgs = { action: "" };
         const jsonText = (fnMatch[2] || "").trim();
         if (jsonText) {
           try {
             args = JSON.parse(jsonText);
           } catch {
-            args = jsonText;
+            args = { action: jsonText };
           }
         }
         const result = { kind: "action" as const, step: stepCounterRef.current, tool: fnMatch[1], args };
@@ -404,7 +404,7 @@ export function useAgentStreamAnthropic({
         eventSourceRef.current.close();
       }
     };
-  }, [sessionId, goal, parseLog, isEmptyObject]);
+  }, [sessionId, goal, parseLog, isEmptyObject, provider]);
 
   return {
     ...state,

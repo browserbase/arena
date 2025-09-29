@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import AnimatedButton from "./components/ui/AnimatedButton";
 import posthog from "posthog-js";
 import ChatFeed from "./components/ChatFeed";
@@ -24,24 +24,21 @@ const Tooltip = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {children}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.span
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-            animate={{ opacity: 1, y: 3, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            transition={{
-              duration: 0.2,
-              type: "spring",
-              stiffness: 400,
-              damping: 17,
-            }}
-            className="absolute w-auto px-3 py-2 min-w-max left-1/2 -translate-x-1/2 bg-[#2E191E] text-white text-xs font-ppsupply z-50 backdrop-blur-sm"
-          >
-            {text}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {isHovered && (
+        <motion.span
+          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+          animate={{ opacity: 1, y: 3, scale: 1 }}
+          transition={{
+            duration: 0.2,
+            type: "spring",
+            stiffness: 400,
+            damping: 17,
+          }}
+          className="absolute w-auto px-3 py-2 min-w-max left-1/2 -translate-x-1/2 bg-[#2E191E] text-white text-xs font-ppsupply z-50 backdrop-blur-sm"
+        >
+          {text}
+        </motion.span>
+      )}
     </div>
   );
 };
@@ -105,7 +102,7 @@ export default function Home() {
   );
 
   return (
-    <AnimatePresence>
+    <>
       {!isChatVisible ? (
         <div className="min-h-screen bg-gray-50 flex flex-col relative">
           {/* Grid Background */}
@@ -344,6 +341,6 @@ export default function Home() {
           onClose={() => setIsChatVisible(false)}
         />
       )}
-    </AnimatePresence>
+    </>
   );
 }

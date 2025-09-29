@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { RotateCcwIcon } from "lucide-react";
 
 interface BrowserSessionContainerProps {
@@ -134,7 +134,7 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
   }, [isVisible, sessionUrl, isCompleted]);
 
   return (
-    <AnimatePresence mode="wait">
+    <>
       {isVisible && (
         <motion.div
           className="w-full max-w-[1000px] mx-auto flex flex-col md:justify-center"
@@ -217,9 +217,8 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
               )
             ) : null}
 
-            {/* Completion Message with AnimatePresence for fade in/out */}
-            <AnimatePresence>
-              {isCompleted && (
+            {/* Completion Message */}
+            {isCompleted && (
                 <motion.div
                   className="absolute inset-0 z-20 flex flex-col items-center justify-center p-3 md:p-8"
                   style={{
@@ -287,11 +286,10 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
                   </motion.div>
                 </motion.div>
               )}
-            </AnimatePresence>
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </>
   );
 };
 

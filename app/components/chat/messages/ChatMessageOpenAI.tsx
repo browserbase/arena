@@ -29,7 +29,7 @@ const toolNameMapping: Record<string, string> = {
 function getToolDisplayName(step: BrowserStep): string {
   // For computer tool, use the action type from actionArgs
   if (step.tool === "computer" && step.actionArgs) {
-    const action = (step.actionArgs as any).action;
+    const action = step.actionArgs.action;
     if (action && actionTypeMapping[action]) {
       return actionTypeMapping[action];
     }
@@ -100,7 +100,7 @@ export default function ChatMessageOpenAI({ step }: ChatMessageOpenAIProps) {
                 </svg>
                 <span>ToolCall</span>
                 <span className="px-2 py-0.5 bg-gray-100 text-gray-800 border border-gray-300 font-mono">
-                  {(step.actionArgs as any).action || step.tool}
+                  {step.actionArgs?.action || step.tool}
                 </span>
               </summary>
               <div className="mt-2 p-3 bg-gray-50 space-y-2 border border-gray-200">

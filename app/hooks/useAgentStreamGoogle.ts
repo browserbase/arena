@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { BrowserStep } from "@/app/types/ChatFeed";
+import { ActionArgs, BrowserStep } from "@/app/types/ChatFeed";
 import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "@/app/types/Agent";
 
 // Global trackers to avoid duplicate session creation in React Strict Mode
@@ -70,13 +70,13 @@ export function useAgentStreamGoogle({
     // Function call lines, optionally without args, and possibly multi-line JSON
     const fnMatch = raw.match(/^Found function call:\s*([A-Za-z0-9_]+)(?:\s+with args:\s*([\s\S]+))?$/i);
     if (fnMatch) {
-      let args: unknown = {};
+      let args: ActionArgs = { action: "" };
       const jsonText = (fnMatch[2] || "").trim();
       if (jsonText) {
         try {
           args = JSON.parse(jsonText);
         } catch {
-          args = jsonText; // keep raw if not valid JSON
+          args = { action: jsonText };
         }
       }
       return { kind: "action", step: stepCounterRef.current, tool: fnMatch[1], args };
@@ -381,7 +381,7 @@ export function useAgentStreamGoogle({
         eventSourceRef.current.close();
       }
     };
-  }, [sessionId, goal, parseLog, isEmptyObject]);
+  }, [sessionId, goal, parseLog, isEmptyObject, provider]);
 
   return {
     ...state,

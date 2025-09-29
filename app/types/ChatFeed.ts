@@ -3,6 +3,11 @@ export interface ChatFeedProps {
     onClose: () => void;
     url?: string;
   }
+
+export interface ActionArgs {
+    action: string;
+    [key: string]: unknown;
+}
   
 export interface BrowserStep {
     text: string;
@@ -11,7 +16,7 @@ export interface BrowserStep {
     instruction: string;
     stepNumber?: number;
     messageId?: string;
-    actionArgs?: unknown;
+    actionArgs?: ActionArgs;
 }
   
 export interface AgentState {

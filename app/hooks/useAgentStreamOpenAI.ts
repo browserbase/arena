@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { BrowserStep } from "@/app/types/ChatFeed";
-import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "@/app/types/Agent";
+import { BrowserStep, ActionArgs } from "@/app/types/ChatFeed";
+import { UseAgentStreamProps, AgentStreamState } from "@/app/types/Agent";
 
 // Global trackers to avoid duplicate session creation in React Strict Mode
 // by sharing a single in-flight promise across mounts for the same goal.
@@ -34,7 +34,6 @@ export function useAgentStreamOpenAI({
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const stepCounterRef = useRef(1);
-  const stepOffsetRef = useRef(0);
   // Use refs for callbacks to avoid dependency issues
   const onStartRef = useRef(onStart);
   const onDoneRef = useRef(onDone);
@@ -243,7 +242,7 @@ export function useAgentStreamOpenAI({
           nextInvoked.add(toolName);
           
           // Build action args
-          const actionArgs: Record<string, any> = {};
+          const actionArgs: ActionArgs = { action: "" };
           if (payload.type === "computer_call") {
             actionArgs.action = payload.action;
             actionArgs.callId = payload.callId;
@@ -413,7 +412,7 @@ export function useAgentStreamOpenAI({
         eventSourceRef.current.close();
       }
     };
-  }, [sessionId, goal]);
+  }, [sessionId, goal, provider]);
 
   return {
     ...state,

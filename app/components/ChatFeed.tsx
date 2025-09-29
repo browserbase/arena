@@ -67,7 +67,7 @@ function AgentPanel({
       setHasEnded(false);
       setUiState((prev) => ({ ...prev, sessionId: data.sessionId }));
     },
-    [title]
+    []
   );
 
   const handleDone = useCallback(() => {
