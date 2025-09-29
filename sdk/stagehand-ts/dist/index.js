@@ -20588,29 +20588,64 @@ var OpenAICUAClient = class extends AgentClient {
         for (const item of output) {
           if (item.type === "reasoning") {
             this.reasoningItems.set(item.id, item);
+            logger({
+              category: "agent",
+              message: `Reasoning: ${String(item.content || "")}`,
+              level: 1
+            });
           }
         }
         const stepActions = [];
         for (const item of output) {
           if (item.type === "computer_call" && this.isComputerCallItem(item)) {
+            logger({
+              category: "agent",
+              message: `Found computer_call: ${item.action.type}, call_id: ${item.call_id}`,
+              level: 2
+            });
             const action = this.convertComputerCallToAction(item);
             if (action) {
               stepActions.push(action);
+              logger({
+                category: "agent",
+                message: `Converted computer_call to action: ${action.type}`,
+                level: 2
+              });
             }
           } else if (item.type === "function_call" && this.isFunctionCallItem(item)) {
+            logger({
+              category: "agent",
+              message: `Found function_call: ${item.name}, call_id: ${item.call_id}`,
+              level: 2
+            });
             const action = this.convertFunctionCallToAction(item);
             if (action) {
               stepActions.push(action);
+              logger({
+                category: "agent",
+                message: `Converted function_call to action: ${action.type}`,
+                level: 2
+              });
             }
           }
         }
         let message = "";
         for (const item of output) {
           if (item.type === "message") {
+            logger({
+              category: "agent",
+              message: `Found message block`,
+              level: 2
+            });
             if (item.content && Array.isArray(item.content)) {
               for (const content of item.content) {
                 if (content.type === "output_text" && content.text) {
                   message += content.text + "\n";
+                  logger({
+                    category: "agent",
+                    message: `Message text: ${String(content.text || "")}`,
+                    level: 1
+                  });
                 }
               }
             }
@@ -20705,6 +20740,11 @@ var OpenAICUAClient = class extends AgentClient {
           try {
             const action = this.convertComputerCallToAction(item);
             if (action && this.actionHandler) {
+              logger({
+                category: "agent",
+                message: `Executing computer action: ${action.type}`,
+                level: 1
+              });
               yield this.actionHandler(action);
             }
             const screenshot = yield this.captureScreenshot();
@@ -20716,6 +20756,11 @@ var OpenAICUAClient = class extends AgentClient {
                 image_url: screenshot
               }
             };
+            logger({
+              category: "agent",
+              message: `Added computer_call_output for call_id: ${item.call_id}`,
+              level: 2
+            });
             if (this.currentUrl) {
               const computerCallOutput = outputItem;
               computerCallOutput.output.current_url = this.currentUrl;
@@ -21014,7 +21059,7 @@ var AnthropicCUAClient = class extends AgentClient {
             message += textBlock.text + "\n";
             logger({
               category: "agent",
-              message: `Found text block: ${textBlock.text.substring(0, 50)}...`,
+              message: `Found text block: ${textBlock.text}`,
               level: 2
             });
           } else {
@@ -21576,7 +21621,7 @@ var GoogleCUAClient = class extends AgentClient {
    */
   executeStep(logger) {
     return __async(this, null, function* () {
-      var _a15;
+      var _a15, _b;
       try {
         const startTime = Date.now();
         const compressedResult = compressGoogleConversationImages(
@@ -21663,9 +21708,25 @@ var GoogleCUAClient = class extends AgentClient {
         }
         const endTime = Date.now();
         const elapsedMs = endTime - startTime;
+        const { usageMetadata } = response;
         const result = yield this.processResponse(response, logger);
         if (response.candidates && response.candidates[0]) {
-          this.history.push(response.candidates[0].content);
+          const sanitizedContent = JSON.parse(
+            JSON.stringify(response.candidates[0].content)
+          );
+          if (sanitizedContent.parts) {
+            for (const part of sanitizedContent.parts) {
+              if ((_a15 = part.functionCall) == null ? void 0 : _a15.args) {
+                if (typeof part.functionCall.args.x === "number" && part.functionCall.args.x > 999) {
+                  part.functionCall.args.x = 999;
+                }
+                if (typeof part.functionCall.args.y === "number" && part.functionCall.args.y > 999) {
+                  part.functionCall.args.y = 999;
+                }
+              }
+            }
+          }
+          this.history.push(sanitizedContent);
         }
         const functionResponses = [];
         if (result.actions.length > 0) {
@@ -21720,7 +21781,7 @@ var GoogleCUAClient = class extends AgentClient {
                     name: functionCall.name,
                     response: __spreadValues({
                       url: this.currentUrl || ""
-                    }, ((_a15 = functionCall.args) == null ? void 0 : _a15.safety_decision) ? {
+                    }, ((_b = functionCall.args) == null ? void 0 : _b.safety_decision) ? {
                       safety_acknowledgement: "true"
                     } : {}),
                     data: [
@@ -21760,9 +21821,8 @@ var GoogleCUAClient = class extends AgentClient {
           message: result.message,
           completed: result.completed,
           usage: {
-            input_tokens: 0,
-            // Google API doesn't provide token counts in the same way
-            output_tokens: 0,
+            input_tokens: (usageMetadata == null ? void 0 : usageMetadata.promptTokenCount) || 0,
+            output_tokens: (usageMetadata == null ? void 0 : usageMetadata.candidatesTokenCount) || 0,
             inference_time_ms: elapsedMs
           }
         };
@@ -21906,7 +21966,7 @@ var GoogleCUAClient = class extends AgentClient {
           args.y
         );
         const pressEnter = (_a15 = args.press_enter) != null ? _a15 : false;
-        const clearBeforeTyping = (_b = args.clear_before_typing) != null ? _b : false;
+        const clearBeforeTyping = (_b = args.clear_before_typing) != null ? _b : true;
         return {
           type: "type",
           text: args.text,
@@ -22025,6 +22085,8 @@ var GoogleCUAClient = class extends AgentClient {
    * Normalize coordinates from Google's 0-1000 range to actual viewport dimensions
    */
   normalizeCoordinates(x, y) {
+    x = Math.min(999, Math.max(0, x));
+    y = Math.min(999, Math.max(0, y));
     return {
       x: Math.floor(x / 1e3 * this.currentViewport.width),
       y: Math.floor(y / 1e3 * this.currentViewport.height)
@@ -22279,8 +22341,6 @@ var StagehandAgentHandler = class {
         switch (action.type) {
           case "click": {
             const { x, y, button = "left" } = action;
-            yield this.updateCursorPosition(x, y);
-            yield this.animateClick(x, y);
             yield new Promise((resolve2) => setTimeout(resolve2, 200));
             yield this.page.mouse.click(x, y, {
               button
@@ -22453,72 +22513,6 @@ var StagehandAgentHandler = class {
   injectCursor() {
     return __async(this, null, function* () {
       try {
-        const CURSOR_ID = "stagehand-cursor";
-        const HIGHLIGHT_ID = "stagehand-highlight";
-        const cursorExists = yield this.page.evaluate((id) => {
-          return !!document.getElementById(id);
-        }, CURSOR_ID);
-        if (cursorExists) {
-          return;
-        }
-        yield this.page.evaluate(`
-        (function(cursorId, highlightId) {
-          // Create cursor element
-          const cursor = document.createElement('div');
-          cursor.id = cursorId;
-          // Use the provided SVG for a custom cursor
-          cursor.innerHTML = \`
-          <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 28 28" width="28" height="28">
-            <polygon fill="#000000" points="9.2,7.3 9.2,18.5 12.2,15.6 12.6,15.5 17.4,15.5"/>
-            <rect x="12.5" y="13.6" transform="matrix(0.9221 -0.3871 0.3871 0.9221 -5.7605 6.5909)" width="2" height="8" fill="#000000"/>
-          </svg>
-          \`;
-          // Style the cursor
-          cursor.style.position = 'absolute';
-          cursor.style.top = '0';
-          cursor.style.left = '0';
-          cursor.style.width = '28px';
-          cursor.style.height = '28px';
-          cursor.style.pointerEvents = 'none';
-          cursor.style.zIndex = '9999999';
-          cursor.style.transform = 'translate(-4px, -4px)'; // Adjust to align the pointer tip
-          // Create highlight element for click animation
-          const highlight = document.createElement('div');
-          highlight.id = highlightId;
-          highlight.style.position = 'absolute';
-          highlight.style.width = '20px';
-          highlight.style.height = '20px';
-          highlight.style.borderRadius = '50%';
-          highlight.style.backgroundColor = 'rgba(66, 134, 244, 0)';
-          highlight.style.transform = 'translate(-50%, -50%) scale(0)';
-          highlight.style.pointerEvents = 'none';
-          highlight.style.zIndex = '9999998';
-          highlight.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-          highlight.style.opacity = '0';
-          // Add elements to the document
-          document.body.appendChild(cursor);
-          document.body.appendChild(highlight);
-          // Add a function to update cursor position
-          window.__updateCursorPosition = function(x, y) {
-            if (cursor) {
-              cursor.style.transform = \`translate(\${x - 4}px, \${y - 4}px)\`;
-            }
-          };
-          // Add a function to animate click
-          window.__animateClick = function(x, y) {
-            if (highlight) {
-              highlight.style.left = \`\${x}px\`;
-              highlight.style.top = \`\${y}px\`;
-              highlight.style.transform = 'translate(-50%, -50%) scale(1)';
-              highlight.style.opacity = '1';
-              setTimeout(() => {
-                highlight.style.transform = 'translate(-50%, -50%) scale(0)';
-                highlight.style.opacity = '0';
-              }, 300);
-            }
-          };
-        })('${CURSOR_ID}', '${HIGHLIGHT_ID}');
-      `);
         this.logger({
           category: "agent",
           message: "Cursor injected for visual feedback",
@@ -22539,14 +22533,11 @@ var StagehandAgentHandler = class {
   updateCursorPosition(x, y) {
     return __async(this, null, function* () {
       try {
-        yield this.page.evaluate(
-          ({ x: x2, y: y2 }) => {
-            if (window.__updateCursorPosition) {
-              window.__updateCursorPosition(x2, y2);
-            }
-          },
-          { x, y }
-        );
+        this.logger({
+          category: "agent",
+          message: `Updating cursor position to ${x}, ${y}`,
+          level: 2
+        });
       } catch (e) {
       }
     });
@@ -22554,17 +22545,14 @@ var StagehandAgentHandler = class {
   /**
    * Animate a click at the given position
    */
-  animateClick(x, y) {
+  animateClick(_x, _y) {
     return __async(this, null, function* () {
       try {
-        yield this.page.evaluate(
-          ({ x: x2, y: y2 }) => {
-            if (window.__animateClick) {
-              window.__animateClick(x2, y2);
-            }
-          },
-          { x, y }
-        );
+        this.logger({
+          category: "agent",
+          message: `Animating click at ${_x}, ${_y}`,
+          level: 2
+        });
       } catch (e) {
       }
     });

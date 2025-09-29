@@ -317,13 +317,36 @@ export class GoogleCUAClient extends AgentClient {
 
       const endTime = Date.now();
       const elapsedMs = endTime - startTime;
+      const { usageMetadata } = response;
 
       // Process the response
       const result = await this.processResponse(response, logger);
 
       // Add model response to history
       if (response.candidates && response.candidates[0]) {
-        this.history.push(response.candidates[0].content);
+        // Sanitize any out-of-range coordinates in function calls before adding to history
+        const sanitizedContent = JSON.parse(
+          JSON.stringify(response.candidates[0].content),
+        );
+        if (sanitizedContent.parts) {
+          for (const part of sanitizedContent.parts) {
+            if (part.functionCall?.args) {
+              if (
+                typeof part.functionCall.args.x === "number" &&
+                part.functionCall.args.x > 999
+              ) {
+                part.functionCall.args.x = 999;
+              }
+              if (
+                typeof part.functionCall.args.y === "number" &&
+                part.functionCall.args.y > 999
+              ) {
+                part.functionCall.args.y = 999;
+              }
+            }
+          }
+        }
+        this.history.push(sanitizedContent);
       }
 
       // Execute actions and collect function responses
@@ -447,8 +470,8 @@ export class GoogleCUAClient extends AgentClient {
         message: result.message,
         completed: result.completed,
         usage: {
-          input_tokens: 0, // Google API doesn't provide token counts in the same way
-          output_tokens: 0,
+          input_tokens: usageMetadata?.promptTokenCount || 0,
+          output_tokens: usageMetadata?.candidatesTokenCount || 0,
           inference_time_ms: elapsedMs,
         },
       };
@@ -489,7 +512,6 @@ export class GoogleCUAClient extends AgentClient {
         functionCalls: [],
       };
     }
-
     const candidate = response.candidates[0];
 
     // Log the raw response for debugging
@@ -632,8 +654,7 @@ export class GoogleCUAClient extends AgentClient {
         );
         // Google's type_text_at includes press_enter and clear_before_typing parameters
         const pressEnter = (args.press_enter as boolean) ?? false;
-        const clearBeforeTyping =
-          (args.clear_before_typing as boolean) ?? false;
+        const clearBeforeTyping = (args.clear_before_typing as boolean) ?? true;
 
         // For type_text_at, we need to click first then type
         // This matches the behavior expected by Google's CUA
@@ -774,6 +795,8 @@ export class GoogleCUAClient extends AgentClient {
    * Normalize coordinates from Google's 0-1000 range to actual viewport dimensions
    */
   private normalizeCoordinates(x: number, y: number): { x: number; y: number } {
+    x = Math.min(999, Math.max(0, x));
+    y = Math.min(999, Math.max(0, y));
     return {
       x: Math.floor((x / 1000) * this.currentViewport.width),
       y: Math.floor((y / 1000) * this.currentViewport.height),
