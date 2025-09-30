@@ -152,58 +152,82 @@ function AgentPanel({
   return (
     <div className={`flex-1 flex flex-col min-w-0 ${className}`}>
       {/* Panel header */}
-      <div className="px-3 py-2 border-b border-[#CAC8C7] bg-white flex items-center justify-between">
-        <span className="font-ppsupply font-semibold text-[#2E191E] text-base">{title}</span>
+      <div className="px-2 md:px-3 py-1.5 md:py-2 border-b border-[#CAC8C7] bg-white flex items-center justify-between">
+        <span className="font-ppsupply font-semibold text-[#2E191E] text-sm md:text-base">{title}</span>
       </div>
       
-      {/* Panel content */}
-      <div className="flex flex-col md:flex-row h-full overflow-hidden">
-        {/* Browser area */}
-        <div className="w-full md:flex-[3] p-2 md:p-3 order-first md:order-last flex flex-col items-center justify-center bg-white">
-          {/* Tabs */}
-          {!agentFinished && uiState.sessionId && (
-            <BrowserTabs
-              sessionId={uiState.sessionId}
-              activePage={activePage}
-              setActivePage={setActivePage}
+      {/* Panel content - different layout for mobile */}
+      {isMobile ? (
+        <div className="flex flex-col h-full overflow-hidden">
+          {/* Browser takes full space - goal is shown globally above both panels */}
+          <div className="flex-1 p-2 bg-white overflow-hidden flex flex-col items-center justify-center">
+            {/* Tabs - more compact on mobile */}
+            {!agentFinished && uiState.sessionId && (
+              <div className="mb-1 w-full">
+                <BrowserTabs
+                  sessionId={uiState.sessionId}
+                  activePage={activePage}
+                  setActivePage={setActivePage}
+                />
+              </div>
+            )}
+            
+            <BrowserSessionContainer
+              sessionUrl={browserDisplayUrl}
+              isVisible={true}
+              isCompleted={agentFinished}
+              initialMessage={goal || undefined}
+              onRestart={onRestartAll}
             />
-          )}
-
-          <BrowserSessionContainer
-            sessionUrl={browserDisplayUrl}
-            isVisible={true}
-            isCompleted={agentFinished}
-            initialMessage={goal || undefined}
-            onRestart={onRestartAll}
-          />
+          </div>
         </div>
+      ) : (
+        <div className="flex flex-col md:flex-row h-full overflow-hidden">
+          {/* Browser area - Desktop */}
+          <div className="w-full md:flex-[3] p-2 md:p-3 order-first md:order-last flex flex-col items-center justify-center bg-white">
+            {/* Tabs */}
+            {!agentFinished && uiState.sessionId && (
+              <BrowserTabs
+                sessionId={uiState.sessionId}
+                activePage={activePage}
+                setActivePage={setActivePage}
+              />
+            )}
 
-        {/* Chat sidebar */}
-        <div
-          className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-3 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1 overflow-hidden"
-          style={{
-            height: isMobile
-              ? "calc(100vh - 280px)"
-              : "calc(100vh - 8rem)",
-            position: "relative",
-          }}
-        >
-          {/* Pinned Goal Message */}
-          {goal && (
-            <PinnedGoalMessage
-              initialMessage={goal}
-              isScrolled={isScrolled}
+            <BrowserSessionContainer
+              sessionUrl={browserDisplayUrl}
+              isVisible={true}
+              isCompleted={agentFinished}
+              initialMessage={goal || undefined}
+              onRestart={onRestartAll}
             />
-          )}
+          </div>
 
-          <ChatMessagesList
-            steps={uiState.steps}
-            chatContainerRef={chatContainerRef}
-            isMobile={isMobile}
-            provider={providerType}
-          />
+          {/* Chat sidebar - Desktop only */}
+          <div
+            className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-3 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1 overflow-hidden"
+            style={{
+              height: "calc(100vh - 8rem)",
+              position: "relative",
+            }}
+          >
+            {/* Pinned Goal Message */}
+            {goal && (
+              <PinnedGoalMessage
+                initialMessage={goal}
+                isScrolled={isScrolled}
+              />
+            )}
+
+            <ChatMessagesList
+              steps={uiState.steps}
+              chatContainerRef={chatContainerRef}
+              isMobile={false}
+              provider={providerType}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -355,53 +379,65 @@ export default function ChatFeed({ initialMessage, onClose, rightProvider = "ope
           transition={{ delay: 0.3 }}
         >
           {/* Model comparison header */}
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between p-3 border-b border-[#CAC8C7] bg-gray-50">
-            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3">
-              <span className="font-ppsupply font-semibold text-[#2E191E] text-base">Model Comparison</span>
-              <div className="text-sm text-gray-600 font-ppsupply">
-                Watch both agents tackle the same task simultaneously
+          <div className="flex flex-col gap-2 p-2 md:p-3 border-b border-[#CAC8C7] bg-gray-50">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex flex-col gap-1">
+                <span className="font-ppsupply font-semibold text-[#2E191E] text-sm md:text-base">Model Comparison</span>
+                <div className="text-xs md:text-sm text-gray-600 font-ppsupply">
+                  Watch both agents tackle the same task simultaneously
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleStopAllSessions}
+                disabled={!sessionsInitialized || !!sessionError}
+                className={`w-full sm:w-auto px-3 py-1.5 text-xs sm:text-sm font-ppsupply font-medium text-white transition-colors ${
+                  !sessionsInitialized || !!sessionError
+                    ? "bg-[#FF3B00]/50 cursor-not-allowed"
+                    : "bg-[#FF3B00] hover:bg-[#E63500]"
+                }`}
+              >
+                Stop All Sessions
+              </button>
+            </div>
+          </div>
+          
+          {/* Shared Task Display - Mobile Only */}
+          {isMobile && goal && sessionsInitialized && !sessionError && (
+            <div className="bg-white border-b border-[#CAC8C7] px-3 py-2 sticky top-0 z-20">
+              <div className="text-xs font-ppsupply text-gray-700">
+                <span className="font-semibold">Task: </span>
+                {goal}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={handleStopAllSessions}
-              disabled={!sessionsInitialized || !!sessionError}
-              className={`px-3 py-1.5 text-sm font-ppsupply font-medium text-white transition-colors ${
-                !sessionsInitialized || !!sessionError
-                  ? "bg-[#FF3B00]/50 cursor-not-allowed"
-                  : "bg-[#FF3B00] hover:bg-[#E63500]"
-              }`}
-            >
-              Stop All Sessions
-            </button>
-          </div>
+          )}
           
           {/* Split view panels */}
           <div 
             className="flex flex-col md:flex-row" 
-            style={{ height: isMobile ? "calc(100vh - 120px)" : "calc(100vh - 110px)" }}
+            style={{ height: isMobile ? (sessionsInitialized && !sessionError ? "calc(100vh - 180px)" : "calc(100vh - 140px)") : "calc(100vh - 110px)" }}
           >
             {sessionError ? (
-              <div className="flex-1 flex items-center justify-center p-8">
+              <div className="flex-1 flex items-center justify-center p-4">
                 <div className="text-center">
-                  <div className="text-red-600 font-ppsupply text-lg mb-2">Failed to initialize sessions</div>
-                  <div className="text-gray-600 font-ppsupply text-sm mb-4">{sessionError}</div>
+                  <div className="text-red-600 font-ppsupply text-sm md:text-lg mb-2">Failed to initialize sessions</div>
+                  <div className="text-gray-600 font-ppsupply text-xs md:text-sm mb-4">{sessionError}</div>
                   <button
                     onClick={onClose}
-                    className="px-4 py-2 bg-[#FF3B00] text-white font-ppsupply hover:bg-[#E63500] transition-colors"
+                    className="px-3 py-1.5 md:px-4 md:py-2 text-sm bg-[#FF3B00] text-white font-ppsupply hover:bg-[#E63500] transition-colors"
                   >
                     Try Again
                   </button>
                 </div>
               </div>
             ) : !sessionsInitialized ? (
-              <div className="flex-1 flex items-center justify-center p-8">
+              <div className="flex-1 flex items-center justify-center p-4">
                 <div className="text-center">
-                  <div className="text-[#2E191E] font-ppsupply text-lg mb-4">Initializing sessions...</div>
-                  <div className="flex justify-center space-x-2">
-                    <div className="w-3 h-3 bg-[#FF3B00] rounded-full animate-pulse"></div>
-                    <div className="w-3 h-3 bg-[#FF3B00] rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-3 h-3 bg-[#FF3B00] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="text-[#2E191E] font-ppsupply text-sm md:text-lg mb-3 md:mb-4">Initializing sessions...</div>
+                  <div className="flex justify-center space-x-1.5 md:space-x-2">
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-[#FF3B00] rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-[#FF3B00] rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-[#FF3B00] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -415,7 +451,7 @@ export default function ChatFeed({ initialMessage, onClose, rightProvider = "ope
                   initialSessionUrl={sessions.left.url}
                   stopSignal={stopSignal}
                   onRestartAll={onClose}
-                  className="border-r border-[#CAC8C7]"
+                  className={isMobile ? "border-b border-[#CAC8C7]" : "border-r border-[#CAC8C7]"}
                 />
                 <AgentPanel
                   title={rightProvider === "openai" ? "OpenAI Computer Use" : "Anthropic Computer Use (Claude Sonnet 4)"}

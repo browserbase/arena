@@ -121,43 +121,43 @@ export default function Home() {
           <NavBar />
 
           {/* Main Content */}
-          <main className="flex-1 flex flex-col items-center pt-12 md:pt-16 lg:pt-20 pb-16 md:pb-24 lg:pb-32 px-6 z-10">
+          <main className="flex-1 flex flex-col items-center pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-12 sm:pb-16 md:pb-24 lg:pb-32 px-4 sm:px-6 z-10">
             <div className="w-full max-w-[640px] md:max-w-[800px] lg:max-w-[960px] bg-white border border-[#CAC8C7] shadow-sm z-10">
-              <div className="w-full h-12 md:h-16 bg-white border-b border-[#CAC8C7] flex items-center px-4 md:px-6">
+              <div className="w-full h-10 md:h-16 bg-white border-b border-[#CAC8C7] flex items-center px-3 md:px-6">
                 <div className="flex items-center gap-2">
                   <Tooltip text="why would you want to close this?">
-                    <div className="w-3 h-3  bg-red-500 hover:scale-110 transition-transform" />
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-red-500 hover:scale-110 transition-transform" />
                   </Tooltip>
                   <Tooltip text="s/o to the 🅱️rowserbase devs">
-                    <div className="w-3 h-3  bg-yellow-500 hover:scale-110 transition-transform" />
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-yellow-500 hover:scale-110 transition-transform" />
                   </Tooltip>
                   <Tooltip text="@kylejeong21 was here">
-                    <div className="w-3 h-3  bg-green-500 hover:scale-110 transition-transform" />
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-green-500 hover:scale-110 transition-transform" />
                   </Tooltip>
                 </div>
               </div>
 
-              <div className="p-8 md:p-10 lg:p-12 flex flex-col items-center gap-8 md:gap-10">
-                <div className="flex flex-col items-center gap-3 md:gap-5">
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-ppneue text-gray-900 text-center">
+              <div className="p-4 md:p-10 lg:p-12 flex flex-col items-center gap-4 md:gap-10">
+                <div className="flex flex-col items-center gap-2 md:gap-5">
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-ppneue text-gray-900 text-center">
                     Browser Agent Comparison
                   </h1>
-                  <p className="text-base md:text-lg font-ppsupply text-gray-500 text-center">
+                  <p className="text-sm sm:text-base md:text-lg font-ppsupply text-gray-500 text-center">
                     Compare AI models side-by-side as they browse the web.
                   </p>
                   
                   {/* Provider Selection */}
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 border border-[#CAC8C7]">
-                    <div className="flex items-center gap-2">
-                      <span className="font-ppsupply text-sm text-[#2E191E] font-medium">Left:</span>
-                      <span className="px-3 py-1 bg-[#2E191E] text-white text-sm font-ppsupply">Google</span>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 p-3 md:p-4 bg-gray-50 border border-[#CAC8C7] w-full">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1">
+                      <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">Left:</span>
+                      <span className="flex-1 text-center px-3 py-1 bg-[#2E191E] text-white text-xs sm:text-sm font-ppsupply">Google</span>
                     </div>
-                    <div className="w-px h-6 bg-[#CAC8C7]"></div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-ppsupply text-sm text-[#2E191E] font-medium">Right:</span>
-                      <div className="inline-flex border border-[#CAC8C7] bg-white">
+                    <div className="hidden sm:block w-px h-6 bg-[#CAC8C7]"></div>
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1">
+                      <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">Right:</span>
+                      <div className="flex-1 inline-flex border border-[#CAC8C7] bg-white">
                         <button
-                          className={`px-4 py-1 text-sm font-ppsupply transition-all duration-200 ${
+                          className={`flex-1 px-3 sm:px-4 py-1 text-xs sm:text-sm font-ppsupply transition-all duration-200 ${
                             rightProvider === "openai" 
                               ? "bg-[#2E191E] text-white" 
                               : "bg-white text-[#2E191E] hover:bg-gray-50"
@@ -167,7 +167,7 @@ export default function Home() {
                           OpenAI
                         </button>
                         <button
-                          className={`px-4 py-1 text-sm font-ppsupply transition-all duration-200 ${
+                          className={`flex-1 px-3 sm:px-4 py-1 text-xs sm:text-sm font-ppsupply transition-all duration-200 ${
                             rightProvider === "anthropic" 
                               ? "bg-[#2E191E] text-white" 
                               : "bg-white text-[#2E191E] hover:bg-gray-50"
@@ -200,7 +200,7 @@ export default function Home() {
                       name="message"
                       type="text"
                       placeholder="What's the price of NVIDIA stock?"
-                      className="w-full px-4 py-3 sm:pr-[140px] pr-[100px] border border-[#CAC8C7] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:border-[#FF3B00] font-ppsupply text-sm md:text-base md:py-5 lg:py-6 transition-all duration-300 focus:pulse-glow-red focus:backdrop-blur-sm focus:bg-opacity-95 focus:bg-white"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-[90px] sm:pr-[100px] md:pr-[140px] border border-[#CAC8C7] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 focus:border-[#FF3B00] font-ppsupply text-sm md:text-base md:py-5 lg:py-6 transition-all duration-300 focus:pulse-glow-red focus:backdrop-blur-sm focus:bg-opacity-95 focus:bg-white"
                       style={{
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -208,12 +208,12 @@ export default function Home() {
                         backdropFilter: "blur(8px)",
                       }}
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3">
                       <AnimatedButton type="submit">Run</AnimatedButton>
                     </div>
                   </div>
                 </form>
-                <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-5 w-full">
+                <div className="grid grid-cols-2 gap-2 md:gap-4 lg:gap-5 w-full">
                   <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -223,11 +223,14 @@ export default function Home() {
                         "Find the most recently opened non-draft PR on Github for Browserbase's Stagehand project and make sure the combination-evals in the PR validation passed."
                       )
                     }
-                    className="p-3 md:p-5 lg:p-6 text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal md:min-h-[100px] lg:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)] rounded-none"
+                    className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
-                    <div className="w-full h-full flex flex-row justify-between items-start px-3 py-2 md:px-4 md:py-3 space-y-3">
-                      <span className="text-left">Review a pull request<br />on Github</span>
-                      <Code className="" size={20} strokeWidth={1.5} />
+                    <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
+                      <span className="text-left text-xs sm:text-sm md:text-base">Review a pull request<br />on Github</span>
+                      <div className="self-end sm:self-start">
+                        <Code className="sm:hidden" size={16} strokeWidth={1.5} />
+                        <Code className="hidden sm:block" size={20} strokeWidth={1.5} />
+                      </div>
                     </div>
                   
                   </motion.button>
@@ -241,11 +244,14 @@ export default function Home() {
                         "Go to Hacker News and find the most controversial post from today, then read the top 3 comments and summarize the debate."
                       )
                     }
-                    className="p-3 md:p-5 lg:p-6 text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal md:min-h-[100px] lg:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)] rounded-none"
+                    className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
-                    <div className="w-full h-full flex flex-row justify-between items-start px-3 py-2 md:px-4 md:py-3">
-                      <span className="text-left">Browse Hacker News<br />for trending debates</span>
-                      <MessageCircle size={20} strokeWidth={1.5} className="rounded-none" />
+                    <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
+                      <span className="text-left text-xs sm:text-sm md:text-base">Browse Hacker News<br />for trending debates</span>
+                      <div className="self-end sm:self-start">
+                        <MessageCircle className="sm:hidden" size={16} strokeWidth={1.5} />
+                        <MessageCircle className="hidden sm:block" size={20} strokeWidth={1.5} />
+                      </div>
                     </div>
                   </motion.button>
                   <motion.button
@@ -257,11 +263,14 @@ export default function Home() {
                         "Play a game of 2048 on https://www.2048.org/. Just try to win and I'll watch. Good luck!"
                       )
                     }
-                    className="p-3 md:p-5 lg:p-6 text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal md:min-h-[100px] lg:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)] rounded-none"
+                    className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
-                    <div className="w-full h-full flex flex-row justify-between items-start px-3 py-2 md:px-4 md:py-3 space-y-3">
-                      <span className="text-left">Play a game of<br />2048</span>
-                      <UtensilsCrossed size={20} strokeWidth={1.5} className="rounded-none" />
+                    <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
+                      <span className="text-left text-xs sm:text-sm md:text-base">Play a game of<br />2048</span>
+                      <div className="self-end sm:self-start">
+                        <UtensilsCrossed className="sm:hidden" size={16} strokeWidth={1.5} />
+                        <UtensilsCrossed className="hidden sm:block" size={20} strokeWidth={1.5} />
+                      </div>
                     </div>
                   </motion.button>
                   <motion.button
@@ -269,11 +278,14 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.7 }}
                     onClick={() => startChat("Compare the features and pricing of the top 3 project management tools on Product Hunt today. Create a simple comparison for me.")}
-                    className="p-3 md:p-5 lg:p-6 text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal md:min-h-[100px] lg:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)] rounded-none"
+                    className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
-                    <div className="w-full h-full flex flex-row justify-between items-start px-3 py-2 md:px-4 md:py-3 space-y-3">
-                      <span className="text-left">Research and compare<br />trending tools</span>
-                      <Search size={20} strokeWidth={1.5} className="rounded-none" />
+                    <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
+                      <span className="text-left text-xs sm:text-sm md:text-base">Research and compare<br />trending tools</span>
+                      <div className="self-end sm:self-start">
+                        <Search className="sm:hidden" size={16} strokeWidth={1.5} />
+                        <Search className="hidden sm:block" size={20} strokeWidth={1.5} />
+                      </div>
                     </div>
                   </motion.button>
                 </div>
@@ -302,7 +314,7 @@ export default function Home() {
                 ease: [0.25, 0.1, 0.25, 1.0],
                 staggerChildren: 0.1,
               }}
-              className="bg-[#28171B] p-4 md:p-6 lg:p-8 mt-8 md:mt-10 w-full max-w-[640px] md:max-w-[800px] lg:max-w-[960px] relative overflow-hidden backdrop-blur-sm bg-opacity-90"
+              className="bg-[#28171B] p-3 md:p-6 lg:p-8 mt-4 md:mt-10 w-full max-w-[640px] md:max-w-[800px] lg:max-w-[960px] relative overflow-hidden backdrop-blur-sm bg-opacity-90"
             >
               {/* Tech animation background elements */}
               <motion.div
@@ -311,12 +323,12 @@ export default function Home() {
                 animate={{ opacity: 0.1 }}
                 transition={{ duration: 0.5 }}
               >
-                <div className="absolute top-0 right-0 sm:w-20 sm:h-20 w-16 h-16 bg-[#FF3B00] rounded-full blur-xl"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-blue-400 rounded-full blur-xl"></div>
+                <div className="absolute top-0 right-0 sm:w-20 sm:h-20 w-16 h-16 bg-[#FF3B00] -full blur-xl"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-blue-400 -full blur-xl"></div>
               </motion.div>
 
               <motion.p
-                className="text-base md:text-lg font-ppsupply text-center text-white relative z-10 font-semibold"
+                className="text-sm md:text-lg font-ppsupply text-center text-white relative z-10 font-semibold"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.5 }}

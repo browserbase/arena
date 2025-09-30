@@ -21,7 +21,7 @@ export default function NavBar({
 }: NavBarProps) {
   return (
     <motion.nav
-      className={`flex justify-between items-center px-4 pt-4 sm:px-8 sm:py-4 bg-white border-b border-[#CAC8C7] shadow-sm relative z-10 ${className}`}
+      className={`flex justify-between items-center px-3 py-2 sm:px-8 sm:py-4 bg-white border-b border-[#CAC8C7] shadow-sm relative z-10 ${className}`}
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
@@ -34,30 +34,30 @@ export default function NavBar({
           href="https://www.browserbase.com/cua/google"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 hover:opacity-90 transition-opacity duration-200"
+          className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity duration-200"
         >
           <Image
             src="/favicon.svg"
             alt="Google Browser"
-            className="w-8 h-8"
+            className="w-6 h-6 sm:w-8 sm:h-8"
             width={32}
             height={32}
           />
-          <span className="font-ppsupply text-xl font-bold text-[#100D0D]">
+          <span className="font-ppsupply text-sm sm:text-xl font-bold text-[#100D0D]">
             {title}
           </span>
         </a>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <a
           href="https://www.browserbase.com/cua/google"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <button className="flex items-center justify-center px-3 py-2 bg-white gap-1 text-sm font-medium border border-[#F14A1C] transition-all duration-200 hover:bg-[#F14A1C] group h-full">
+          <button className="flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2 bg-white gap-1 text-xs sm:text-sm font-medium border border-[#F14A1C] transition-all duration-200 hover:bg-[#F14A1C] group h-full">
             <Layers
-              size={20}
-              className="sm:mr-2 text-[#F14A1C] group-hover:text-white transition-colors duration-200"
+              size={16}
+              className="sm:size-5 sm:mr-2 text-[#F14A1C] group-hover:text-white transition-colors duration-200"
               strokeWidth={2}
               strokeLinecap="square"
               strokeLinejoin="miter"
@@ -73,13 +73,13 @@ export default function NavBar({
             target="_blank"
             rel="noopener noreferrer"
           >
-            <button className="h-fit flex items-center justify-center px-3 py-2 bg-[#1b2128] hover:bg-[#1d232b] gap-1 text-sm font-medium text-white border border-[#CAC8C7] transition-colors duration-200">
+            <button className="h-fit flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2 bg-[#1b2128] hover:bg-[#1d232b] gap-1 text-xs sm:text-sm font-medium text-white border border-[#CAC8C7] transition-colors duration-200">
               <Image
                 src="/github.svg"
                 alt="GitHub"
-                width={20}
-                height={20}
-                className="sm:mr-2"
+                width={16}
+                height={16}
+                className="sm:w-5 sm:h-5 sm:mr-2"
               />
               <span className="hidden sm:inline">View GitHub</span>
             </button>
@@ -88,14 +88,14 @@ export default function NavBar({
         {showCloseButton && onClose && (
           <motion.button
             onClick={onClose}
-            className="flex items-center justify-center px-3 py-2 bg-[#F6F5F5] gap-1 text-sm font-medium border border-[#CAC8C7] transition-all duration-200 hover:bg-gray-100 h-full"
+            className="flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2 bg-[#F6F5F5] gap-1 text-xs sm:text-sm font-medium border border-[#CAC8C7] transition-all duration-200 hover:bg-gray-100 h-full"
             whileTap={{ scale: 0.98 }}
           >
             <span className="flex items-center text-[#10100D]">
-              Close
+              <span className="hidden sm:inline">Close</span>
               <X
-                size={16}
-                className="ml-2 text-[#10100D]"
+                size={14}
+                className="sm:size-4 sm:ml-2 text-[#10100D]"
                 strokeWidth={2}
               />
             </span>

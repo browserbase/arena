@@ -203,13 +203,13 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
                   style={{ backgroundColor: "rgba(245, 240, 255, 0.4)" }}
                 >
                   {/* Simple loading animation that will always show when session URL is not available */}
-                  <div className="flex flex-col items-center space-y-6 w-full animate-in fade-in slide-in-from-bottom-5 duration-500">
-                    <h2 className="text-2xl font-semibold text-white z-10 animate-in fade-in duration-700 delay-500">
+                  <div className="flex flex-col items-center space-y-4 md:space-y-6 w-full animate-in fade-in slide-in-from-bottom-5 duration-500">
+                    <h2 className="text-base md:text-2xl font-semibold text-white z-10 animate-in fade-in duration-700 delay-500">
                       Starting Google Browser
                     </h2>
-                    <div className="flex flex-col items-center space-y-4 w-full animate-in fade-in duration-700 delay-500">
-                      <div className="mt-4 flex justify-center">
-                        <div className=" bg-gray-200 h-16 w-16 animate-pulse"></div>
+                    <div className="flex flex-col items-center space-y-3 md:space-y-4 w-full animate-in fade-in duration-700 delay-500">
+                      <div className="mt-2 md:mt-4 flex justify-center">
+                        <div className="bg-gray-200 h-12 w-12 md:h-16 md:w-16 animate-pulse"></div>
                       </div>
                     </div>
                   </div>
@@ -278,9 +278,9 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
                     <motion.button
                       type="button"
                       onClick={onRestart}
-                      className="flex gap-x-2 text-white px-2 py-1 items-center"
+                      className="flex gap-x-1.5 md:gap-x-2 text-white px-2 py-1 items-center text-xs md:text-sm"
                     >
-                      <RotateCcwIcon className="size-4" />
+                      <RotateCcwIcon className="size-3 md:size-4" />
                       Restart
                     </motion.button>
                   </motion.div>

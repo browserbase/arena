@@ -13,10 +13,10 @@ export const createMarkdownComponents = (textColor: string) => ({
     <strong className="text-[#2E191E] font-semibold" {...props}>{children}</strong>
   ),
   code: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
-    <code className="text-[#2E191E] bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>
+    <code className="text-[#2E191E] bg-gray-100 px-1 py-0.5  text-sm font-mono" {...props}>{children}</code>
   ),
   pre: ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
-    <pre className="bg-gray-50 border border-gray-200 rounded p-3 overflow-x-auto text-sm" {...props}>{children}</pre>
+    <pre className="bg-gray-50 border border-gray-200  p-3 overflow-x-auto text-sm" {...props}>{children}</pre>
   ),
   h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
     <h1 className="text-[#2E191E] text-lg font-semibold mb-2" {...props}>{children}</h1>

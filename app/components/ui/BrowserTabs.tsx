@@ -92,9 +92,9 @@ export default function BrowserTabs({
   return (
     <div className="w-full overflow-x-auto max-w-[1000px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <div
-        className="grid gap-2 w-full justify-start"
+        className="grid gap-1 md:gap-2 w-full justify-start"
         style={{
-          gridTemplateColumns: `repeat(${pages.length}, minmax(100px,300px))`,
+          gridTemplateColumns: `repeat(${pages.length}, minmax(80px,300px))`,
         }}
       >
         {pages.map((page) => (
@@ -102,7 +102,7 @@ export default function BrowserTabs({
             key={page.id}
             onClick={() => setActivePage(page)}
             className={cn(
-              "bg-[rgb(248,248,255)] rounded-[2px] text-gray-500 border border-[rgb(245,235,255)] text-sm flex gap-x-1 py-1 px-1.5 max-w-[300px] cursor-pointer hover:border-gray-400",
+              "bg-[rgb(248,248,255)] text-gray-500 border border-[rgb(245,235,255)] text-xs md:text-sm flex gap-x-1 py-0.5 md:py-1 px-1 md:px-1.5 max-w-[300px] cursor-pointer hover:border-gray-400",
               {
                 "bg-[rgb(245,240,255)] text-gray-800 border-[rgb(179,170,170)]":
                   page.id === activePage?.id,
@@ -111,7 +111,7 @@ export default function BrowserTabs({
           >
             {page.faviconUrl && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={page.faviconUrl} alt={page.title} className="size-3" />
+              <img src={page.faviconUrl} alt={page.title} className="size-2.5 md:size-3" />
             )}
             {tabLoading(page) ? (
               <span className="text-gray-400 animate-pulse">Loading...</span>
