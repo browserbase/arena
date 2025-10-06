@@ -17,7 +17,7 @@ const PROVIDER_CONFIGS = {
     stagehandModel: "anthropic",
   },
   google: {
-    model: "computer-use-preview-09-2025",
+    model: "computer-use-preview-10-2025",
     apiKey: process.env.GOOGLE_API_KEY!,
     logger: createGoogleLogger,
     stagehandModel: "google",

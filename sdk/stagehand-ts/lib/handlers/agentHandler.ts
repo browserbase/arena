@@ -530,6 +530,16 @@ export class StagehandAgentHandler {
    */
   private async updateCursorPosition(x: number, y: number): Promise<void> {
     try {
+      // await this.page.evaluate(
+      //   ({ x, y }) => {
+      //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //     if ((window as any).__updateCursorPosition) {
+      //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //       (window as any).__updateCursorPosition(x, y);
+      //     }
+      //   },
+      //   { x, y },
+      // );
       this.logger({
         category: "agent",
         message: `Updating cursor position to ${x}, ${y}`,

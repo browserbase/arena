@@ -21435,7 +21435,7 @@ var AnthropicCUAClient = class extends AgentClient {
             x,
             y
           }, input);
-        } else if (action === "drag") {
+        } else if (action === "drag" || action === "left_click_drag") {
           const path4 = input.path || (input.coordinate ? [
             {
               x: input.start_coordinate[0],
@@ -21505,6 +21505,7 @@ var AnthropicCUAClient = class extends AgentClient {
 };
 
 // lib/agent/GoogleCUAClient.ts
+var import_genai3 = require("@google/genai");
 var GoogleCUAClient = class extends AgentClient {
   constructor(type, modelName, userProvidedInstructions, clientOptions) {
     super(type, modelName, userProvidedInstructions);
@@ -21512,9 +21513,28 @@ var GoogleCUAClient = class extends AgentClient {
     this.history = [];
     this.environment = "ENVIRONMENT_BROWSER";
     this.apiKey = (clientOptions == null ? void 0 : clientOptions.apiKey) || process.env.GEMINI_API_KEY || "";
+    this.client = new import_genai3.GoogleGenAI({
+      apiKey: this.apiKey
+    });
     if ((clientOptions == null ? void 0 : clientOptions.environment) && typeof clientOptions.environment === "string") {
       this.environment = clientOptions.environment;
     }
+    this.generateContentConfig = {
+      temperature: 1,
+      topP: 0.95,
+      topK: 40,
+      maxOutputTokens: 8192,
+      // systemInstruction: this.userProvidedInstructions
+      //   ? { parts: [{ text: this.userProvidedInstructions }] }
+      //   : { parts: [{ text: buildGoogleCUASystemPrompt() }] },
+      tools: [
+        {
+          computerUse: {
+            environment: this.environment
+          }
+        }
+      ]
+    };
     this.clientOptions = {
       apiKey: this.apiKey
     };
@@ -21611,6 +21631,14 @@ var GoogleCUAClient = class extends AgentClient {
       this.history = [
         {
           role: "user",
+          parts: [
+            {
+              text: "System prompt: " + buildGoogleCUASystemPrompt().content
+            }
+          ]
+        },
+        {
+          role: "user",
           parts
         }
       ];
@@ -21629,76 +21657,43 @@ var GoogleCUAClient = class extends AgentClient {
           2
         );
         const compressedHistory = compressedResult.items;
-        const requestBody = {
-          contents: compressedHistory,
-          generationConfig: {
-            temperature: 1,
-            topP: 0.95,
-            topK: 40,
-            maxOutputTokens: 8192
-          },
-          tools: [
-            {
-              computerUse: {
-                environment: this.environment
-              }
-            }
-          ]
-        };
-        if (this.userProvidedInstructions) {
-          requestBody.systemInstruction = {
-            parts: [{ text: this.userProvidedInstructions }]
-          };
-        } else {
-          requestBody.systemInstruction = {
-            parts: [{ text: buildGoogleCUASystemPrompt() }]
-          };
-        }
-        const apiUrl = `https://generativelanguage.googleapis.com/v1alpha/models/${this.modelName}:generateContent?key=${this.apiKey}`;
-        const headers = {
-          "Content-Type": "application/json",
-          "User-Agent": "google-genai-sdk/1.27.0",
-          "x-goog-api-client": "google-genai-sdk/1.27.0"
-        };
-        const maxRetries = 3;
+        const maxRetries = 5;
+        const baseDelayS = 1;
         let lastError = null;
         let response = null;
         for (let attempt = 0; attempt < maxRetries; attempt++) {
           try {
             if (attempt > 0) {
-              const delay = Math.pow(2, attempt) * 1e3;
+              const delay = baseDelayS * Math.pow(2, attempt) * 1e3;
               logger({
                 category: "agent",
-                message: `Retrying API call (attempt ${attempt + 1}/${maxRetries}) after ${delay}ms delay`,
+                message: `Generating content failed on attempt ${attempt + 1}. Retrying in ${delay / 1e3} seconds...`,
                 level: 2
               });
               yield new Promise((resolve2) => setTimeout(resolve2, delay));
             }
-            const fetchResponse = yield fetch(apiUrl, {
-              method: "POST",
-              headers,
-              body: JSON.stringify(requestBody)
+            response = yield this.client.models.generateContent({
+              model: this.modelName,
+              contents: compressedHistory,
+              config: this.generateContentConfig
             });
-            if (!fetchResponse.ok) {
-              const errorText = yield fetchResponse.text();
-              throw new Error(
-                `API request failed: ${fetchResponse.status} ${fetchResponse.statusText}. ${errorText}`
-              );
+            if (!response.candidates || response.candidates.length === 0) {
+              throw new Error("Response has no candidates!");
             }
-            const apiResponse = yield fetchResponse.json();
-            if (!apiResponse.candidates || !apiResponse.candidates[0] || !apiResponse.candidates[0].content || !apiResponse.candidates[0].content.parts || apiResponse.candidates[0].content.parts.length === 0) {
-              throw new Error("Response missing expected content structure");
-            }
-            response = apiResponse;
             break;
           } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
             logger({
               category: "agent",
-              message: `API call failed (attempt ${attempt + 1}/${maxRetries}): ${lastError.message}`,
+              message: `API call error: ${lastError.message}`,
               level: 2
             });
             if (attempt === maxRetries - 1) {
+              logger({
+                category: "agent",
+                message: `Generating content failed after ${maxRetries} attempts.`,
+                level: 0
+              });
               throw lastError;
             }
           }
@@ -21784,7 +21779,7 @@ var GoogleCUAClient = class extends AgentClient {
                     }, ((_b = functionCall.args) == null ? void 0 : _b.safety_decision) ? {
                       safety_acknowledgement: "true"
                     } : {}),
-                    data: [
+                    parts: [
                       {
                         inlineData: {
                           mimeType: "image/png",
@@ -22120,8 +22115,9 @@ var modelToAgentProviderMap = {
   "claude-3-7-sonnet-latest": "anthropic",
   "claude-sonnet-4-20250514": "anthropic",
   "claude-opus-4-1-20250805": "anthropic",
+  "claude-sonnet-4-5-20250929": "anthropic",
   "computer-use-exp-07-16": "google",
-  "computer-use-preview-09-2025": "google"
+  "computer-use-preview-10-2025": "google"
 };
 var AgentProvider = class _AgentProvider {
   /**
