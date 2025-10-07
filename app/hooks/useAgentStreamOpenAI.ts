@@ -34,6 +34,7 @@ export function useAgentStreamOpenAI({
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const stepCounterRef = useRef(1);
+  const finalMessageAddedRef = useRef<string | null>(null);
   // Use refs for callbacks to avoid dependency issues
   const onStartRef = useRef(onStart);
   const onDoneRef = useRef(onDone);
@@ -171,13 +172,16 @@ export function useAgentStreamOpenAI({
     es.addEventListener("reasoning", (e) => {
       if (cancelled) return;
       try {
-        const payload = JSON.parse((e as MessageEvent).data);
-        
+        const payload = JSON.parse((e as MessageEvent).data) as { content: string; timestamp?: number; stepNumber?: number };
+
         setState((prev) => {
-          const currentStep = stepCounterRef.current;
+          const incomingStep = payload.stepNumber;
+          const activeStep = typeof incomingStep === "number" && !Number.isNaN(incomingStep)
+            ? incomingStep
+            : stepCounterRef.current;
           const updatedSteps = [...prev.steps];
-          const stepIndex = updatedSteps.findIndex(s => s.stepNumber === currentStep);
-          
+          const stepIndex = updatedSteps.findIndex((s) => s.stepNumber === activeStep);
+
           if (stepIndex >= 0) {
             updatedSteps[stepIndex] = {
               ...updatedSteps[stepIndex],
@@ -186,7 +190,7 @@ export function useAgentStreamOpenAI({
           } else {
             // Create a new step for the reasoning
             const newStep: BrowserStep = {
-              stepNumber: currentStep,
+              stepNumber: activeStep,
               text: "",
               reasoning: payload.content,
               tool: "MESSAGE",
@@ -194,7 +198,9 @@ export function useAgentStreamOpenAI({
             };
             updatedSteps.push(newStep);
           }
-          
+
+          updatedSteps.sort((a, b) => (a.stepNumber ?? 0) - (b.stepNumber ?? 0));
+
           return { ...prev, steps: updatedSteps };
         });
       } catch (err) {
@@ -334,10 +340,54 @@ export function useAgentStreamOpenAI({
     es.addEventListener("done", (e) => {
       try {
         const payload = JSON.parse((e as MessageEvent).data);
-        setState((prev) => ({
-          ...prev,
-          isFinished: true,
-        }));
+        
+        // Derive final message from payload
+        let finalMessage: string | undefined;
+        if (payload.finalMessage) {
+          finalMessage = payload.finalMessage;
+        } else if (payload.output) {
+          finalMessage = payload.output;
+        } else if (payload.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
+          const lastMessage = payload.messages[payload.messages.length - 1];
+          finalMessage = typeof lastMessage === 'string' ? lastMessage : lastMessage.text;
+        }
+        
+        // If no final message in payload, fall back to last MESSAGE step
+        if (!finalMessage) {
+          setState((prev) => {
+            const lastMessageStep = [...prev.steps]
+              .reverse()
+              .find(step => step.tool === "MESSAGE" && step.text);
+            if (lastMessageStep?.text) {
+              finalMessage = lastMessageStep.text;
+            }
+            return prev;
+          });
+        }
+        
+        // Append final answer step if we have a message and haven't added it yet
+        if (finalMessage && finalMessageAddedRef.current !== finalMessage) {
+          finalMessageAddedRef.current = finalMessage;
+          setState((prev) => {
+            const finalStep: BrowserStep = {
+              stepNumber: prev.steps.length + 1,
+              text: finalMessage!,
+              reasoning: "",
+              tool: "MESSAGE",
+              instruction: "Final Answer",
+            };
+            return {
+              ...prev,
+              steps: [...prev.steps, finalStep],
+              isFinished: true,
+            };
+          });
+        } else {
+          setState((prev) => ({
+            ...prev,
+            isFinished: true,
+          }));
+        }
 
         onDoneRef.current?.(payload);
         // Clear the session promise for this goal to allow future runs

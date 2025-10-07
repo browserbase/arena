@@ -11,6 +11,7 @@ interface ChatMessagesListProps {
   chatContainerRef: RefObject<HTMLDivElement | null>;
   isMobile: boolean;
   provider?: Provider;
+  hasPinnedFinalAnswer?: boolean;
 }
 
 export default function ChatMessagesList({
@@ -18,6 +19,7 @@ export default function ChatMessagesList({
   chatContainerRef,
   isMobile,
   provider,
+  hasPinnedFinalAnswer = false,
 }: ChatMessagesListProps) {
   // Track previous steps length to detect new messages
   const prevStepsLength = useRef(0);
@@ -71,13 +73,14 @@ export default function ChatMessagesList({
   return (
     <div
       ref={handleContainerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 hide-scrollbar"
+      className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 hide-scrollbar w-full"
       style={{
         height: isMobile
           ? "calc(100vh - 400px)"
           : "calc(100% - 100px)",
         flex: "1 1 auto",
         position: "relative",
+        maxWidth: "100%",
       }}
     >
       {filteredSteps.map((step, index) => 
@@ -85,7 +88,7 @@ export default function ChatMessagesList({
       )}
       
       {/* Extra padding at bottom to ensure last message is fully visible */}
-      <div style={{ height: '60px' }} />
+      <div style={{ height: hasPinnedFinalAnswer ? '16px' : '60px' }} />
     </div>
   );
 }

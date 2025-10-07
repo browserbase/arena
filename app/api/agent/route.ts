@@ -11,13 +11,14 @@ export const maxDuration = 600;
 
 const PROVIDER_CONFIGS = {
   anthropic: {
-    model: "claude-sonnet-4-20250514",
+    // model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-5-20250929",
     apiKey: process.env.ANTHROPIC_API_KEY!,
     logger: createAnthropicLogger,
     stagehandModel: "anthropic",
   },
   google: {
-    model: "computer-use-preview-09-2025",
+    model: "gemini-2.5-computer-use-preview-10-2025",
     apiKey: process.env.GOOGLE_API_KEY!,
     logger: createGoogleLogger,
     stagehandModel: "google",
@@ -138,6 +139,7 @@ export async function GET(request: Request) {
         hasInstructions: true,
       });
 
+      const loggerInstance = logger(send);
       const stagehand = new Stagehand({
         env: "BROWSERBASE",
         browserbaseSessionID: sessionId,
@@ -158,7 +160,7 @@ export async function GET(request: Request) {
         useAPI: false,
         verbose: 2,
         disablePino: true,
-        logger: logger(send),
+        logger: loggerInstance,
       });
       stagehandRef = stagehand;
 
@@ -195,8 +197,10 @@ export async function GET(request: Request) {
           send("metrics", stagehand.metrics);
         } catch {}
 
-        console.log(`[SSE-${provider}] done`, { success: result.success, completed: result.completed });
-        send("done", result);
+        // Extract final message from logger
+        const finalMessage = (loggerInstance as unknown as { getLastMessage?: () => string }).getLastMessage?.() || null;
+        console.log(`[SSE-${provider}] done`, { success: result.success, completed: result.completed, finalMessage });
+        send("done", { ...result, finalMessage });
 
         await cleanup(stagehand);
       } catch (error) {

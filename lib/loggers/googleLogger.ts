@@ -7,8 +7,9 @@ export function createGoogleLogger(
   options?: { forwardStepEvents?: boolean }
 ) {
   const forwardSteps = options?.forwardStepEvents ?? false;
+  let lastReasoningMessage: string | null = null;
 
-  return (logLine: LogLine) => {
+  const logger = (logLine: LogLine) => {
     const msg = (logLine?.message ?? "").toString().toLowerCase();
     const category = logLine?.category ?? "";
 
@@ -66,6 +67,12 @@ export function createGoogleLogger(
 
     let cleanMessage = logLine.message;
     cleanMessage = cleanMessage.replace(/^agent\s+\d+\s+/i, "");
+    
+    // Track reasoning messages before cleaning
+    if (logLine.message.match(/^reasoning:\s*/i)) {
+      lastReasoningMessage = logLine.message.replace(/^reasoning:\s*/i, "").trim();
+    }
+    
     cleanMessage = cleanMessage.replace(/^reasoning:\s*/i, "💭 ");
     cleanMessage = cleanMessage.replace(/^executing step\s+(\d+).*?:/i, "Step $1:");
 
@@ -85,5 +92,10 @@ export function createGoogleLogger(
       }
     }
   };
+  
+  // Return logger with getLastMessage method
+  return Object.assign(logger, {
+    getLastMessage: () => lastReasoningMessage
+  });
 }
 

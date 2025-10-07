@@ -191,11 +191,12 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
                 <iframe
                   src={sessionUrl}
                   className="w-full h-full border-none"
-                  sandbox="allow-same-origin allow-scripts allow-forms cursor-not-allowed pointer-events-none"
+                  sandbox="allow-same-origin allow-scripts allow-forms"
                   allow="clipboard-read; clipboard-write"
                   loading="lazy"
                   referrerPolicy="no-referrer"
                   title="Browser Session"
+                  style={{ pointerEvents: 'none', userSelect: 'none' }}
                 />
               ) : (
                 <div

@@ -3,8 +3,9 @@ import { type LogLine } from "@browserbasehq/stagehand";
 type SendFn = (event: string, data: unknown) => void;
 
 export function createAnthropicLogger(send: SendFn) {
+  let lastTextBlock: string | null = null;
 
-  return (logLine: LogLine) => {
+  const logger = (logLine: LogLine) => {
     const msg = (logLine?.message ?? "").toString();
     const category = logLine?.category ?? "";
 
@@ -40,6 +41,7 @@ export function createAnthropicLogger(send: SendFn) {
     const textBlockMatch = msg.match(/^Found text block:\s*([\s\S]+)/);
     if (textBlockMatch) {
       const text = textBlockMatch[1].trim();
+      lastTextBlock = text; // Track the last text block
       // Send as JSON for parseLog to handle
       const message = JSON.stringify({
         type: "text",
@@ -117,4 +119,9 @@ export function createAnthropicLogger(send: SendFn) {
     // Log any unhandled messages for debugging
     console.log("[Anthropic Logger] Unhandled:", msg.substring(0, 100));
   };
+  
+  // Return logger with getLastMessage method
+  return Object.assign(logger, {
+    getLastMessage: () => lastTextBlock
+  });
 }

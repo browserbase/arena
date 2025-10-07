@@ -3,7 +3,9 @@ import { type LogLine } from "@browserbasehq/stagehand";
 type SendFn = (event: string, data: unknown) => void;
 
 export function createOpenAILogger(send: SendFn) {
-  return (logLine: LogLine) => {
+  let lastMessageText: string | null = null;
+  
+  const logger = (logLine: LogLine) => {
     const msg = (logLine?.message ?? "").toString();
     const category = logLine?.category ?? "";
 
@@ -23,8 +25,10 @@ export function createOpenAILogger(send: SendFn) {
     }
 
     // 2. Reasoning logs
-    if (msg.startsWith("Reasoning:") || msg.includes("💭")) {
-      const reasoningText = msg.replace(/^Reasoning:\s*/i, "").replace(/^💭\s*/, "");
+    const reasoningMatch = msg.match(/^Reasoning:?\s*(.*)$/i);
+    if (reasoningMatch) {
+      const reasoningText = reasoningMatch[1];
+
       send("reasoning", {
         content: reasoningText,
         timestamp: Date.now(),
@@ -33,7 +37,7 @@ export function createOpenAILogger(send: SendFn) {
     }
 
     // 3. Computer call logs
-    const computerCallMatch = msg.match(/Found computer_call: (\w+), call_id: ([\w-]+)/);
+    const computerCallMatch = msg.match(/Found computer_call: ([\w.]+), call_id: ([\w-]+)/);
     if (computerCallMatch) {
       send("tool", {
         tool: "computer",
@@ -41,13 +45,6 @@ export function createOpenAILogger(send: SendFn) {
         callId: computerCallMatch[2],
         type: "computer_call",
       });
-      return;
-    }
-
-    // Also handle converted computer calls
-    const convertedComputerMatch = msg.match(/Converted computer_call to action: (\w+)/);
-    if (convertedComputerMatch) {
-      // Skip these - they're redundant with the Found computer_call logs
       return;
     }
 
@@ -75,6 +72,7 @@ export function createOpenAILogger(send: SendFn) {
     // 5. Message text logs
     if (msg.startsWith("Message text:")) {
       const messageText = msg.replace(/^Message text:\s*/, "");
+      lastMessageText = messageText; // Track the last message
       send("message", {
         content: messageText,
         timestamp: Date.now(),
@@ -122,4 +120,9 @@ export function createOpenAILogger(send: SendFn) {
       });
     }
   };
+  
+  // Return logger with getLastMessage method
+  return Object.assign(logger, {
+    getLastMessage: () => lastMessageText
+  });
 }
