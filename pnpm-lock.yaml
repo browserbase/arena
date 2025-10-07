@@ -12,8 +12,8 @@ importers:
         specifier: ^2.6.0
         version: 2.6.0
       '@browserbasehq/stagehand':
-        specifier: github:browserbase/stagehand#cheetah
-        version: https://codeload.github.com/browserbase/stagehand/tar.gz/b5e17490a4b2184d33922e55907f38b316dbfa46(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.1)(zod@3.25.76)
+        specifier: github:browserbase/stagehand#pull/1112/head
+        version: https://codeload.github.com/browserbase/stagehand/tar.gz/88b36442ad49ef51d7d3e61702f856e1b680dadf(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.1)(zod@3.25.76)
       '@vercel/analytics':
         specifier: ^1.4.1
         version: 1.5.0(next@15.1.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
@@ -235,8 +235,8 @@ packages:
   '@browserbasehq/sdk@2.6.0':
     resolution: {integrity: sha512-83iXP5D7xMm8Wyn66TUaUrgoByCmAJuoMoZQI3sGg3JAiMlTfnCIMqyVBoNSaItaPIkaCnrsj6LiusmXV2X9YA==}
 
-  '@browserbasehq/stagehand@https://codeload.github.com/browserbase/stagehand/tar.gz/b5e17490a4b2184d33922e55907f38b316dbfa46':
-    resolution: {tarball: https://codeload.github.com/browserbase/stagehand/tar.gz/b5e17490a4b2184d33922e55907f38b316dbfa46}
+  '@browserbasehq/stagehand@https://codeload.github.com/browserbase/stagehand/tar.gz/88b36442ad49ef51d7d3e61702f856e1b680dadf':
+    resolution: {tarball: https://codeload.github.com/browserbase/stagehand/tar.gz/88b36442ad49ef51d7d3e61702f856e1b680dadf}
     version: 2.5.0
     hasBin: true
     peerDependencies:
@@ -3266,7 +3266,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@browserbasehq/stagehand@https://codeload.github.com/browserbase/stagehand/tar.gz/b5e17490a4b2184d33922e55907f38b316dbfa46(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.1)(zod@3.25.76)':
+  '@browserbasehq/stagehand@https://codeload.github.com/browserbase/stagehand/tar.gz/88b36442ad49ef51d7d3e61702f856e1b680dadf(deepmerge@4.3.1)(dotenv@16.6.1)(react@19.1.1)(zod@3.25.76)':
     dependencies:
       '@anthropic-ai/sdk': 0.39.0
       '@browserbasehq/sdk': 2.6.0

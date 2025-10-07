@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@browserbasehq/sdk": "^2.6.0",
-    "@browserbasehq/stagehand": "github:browserbase/stagehand#cheetah",
+    "@browserbasehq/stagehand": "github:browserbase/stagehand#pull/1112/head",
     "@vercel/analytics": "^1.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
