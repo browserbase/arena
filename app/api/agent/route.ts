@@ -178,7 +178,6 @@ export async function GET(request: Request) {
         });
 
         const agent = stagehand.agent({
-          // @ts-ignore 
           provider: provider === "anthropic" ? "anthropic" : provider === "google" ? "google" : "openai",
           model: config.model,
           options: {
@@ -199,7 +198,7 @@ export async function GET(request: Request) {
         } catch {}
 
         // Extract final message from logger
-        const finalMessage = (loggerInstance as any).getLastMessage?.() || null;
+        const finalMessage = (loggerInstance as unknown as { getLastMessage?: () => string }).getLastMessage?.() || null;
         console.log(`[SSE-${provider}] done`, { success: result.success, completed: result.completed, finalMessage });
         send("done", { ...result, finalMessage });
 
