@@ -268,11 +268,11 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.7 }}
-                    onClick={() => startChat("Compare the features and pricing of the top 3 project management tools on Product Hunt today. Create a simple comparison for me.")}
+                    onClick={() => startChat("Find the current price of Bitcoin and Ethereum.")}
                     className="p-3 md:p-5 lg:p-6 text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal md:min-h-[100px] lg:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)] rounded-none"
                   >
                     <div className="w-full h-full flex flex-row justify-between items-start px-3 py-2 md:px-4 md:py-3 space-y-3">
-                      <span className="text-left">Research and compare<br />trending tools</span>
+                      <span className="text-left">Get current crypto prices<br /></span>
                       <Search size={20} strokeWidth={1.5} className="rounded-none" />
                     </div>
                   </motion.button>
