@@ -3287,12 +3287,8 @@ snapshots:
     dependencies:
       '@anthropic-ai/sdk': 0.39.0
       '@browserbasehq/sdk': 2.6.0
-<<<<<<< HEAD
       '@google/genai': 1.22.0(@modelcontextprotocol/sdk@1.19.1)
       '@modelcontextprotocol/sdk': 1.19.1
-=======
-      '@google/genai': 1.22.0
->>>>>>> 3f95551 (add pinned final answer, name changes)
       ai: 4.3.19(react@19.1.1)(zod@3.25.76)
       deepmerge: 4.3.1
       devtools-protocol: 0.0.1464554
@@ -3319,7 +3315,6 @@ snapshots:
       '@ai-sdk/xai': 1.2.18(zod@3.25.76)
       ollama-ai-provider: 1.2.0(zod@3.25.76)
     transitivePeerDependencies:
-      - '@modelcontextprotocol/sdk'
       - bufferutil
       - encoding
       - react
@@ -3386,11 +3381,7 @@ snapshots:
       '@eslint/core': 0.15.2
       levn: 0.4.1
 
-<<<<<<< HEAD
   '@google/genai@1.22.0(@modelcontextprotocol/sdk@1.19.1)':
-=======
-  '@google/genai@1.22.0':
->>>>>>> 3f95551 (add pinned final answer, name changes)
     dependencies:
       google-auth-library: 9.15.1
       ws: 8.18.3
