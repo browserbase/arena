@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ActionArgs, BrowserStep } from "@/app/types/ChatFeed";
+import { BrowserStep } from "@/app/types/ChatFeed";
 import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "@/app/types/Agent";
 
 // Global trackers to avoid duplicate session creation in React Strict Mode

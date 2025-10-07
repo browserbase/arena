@@ -178,6 +178,7 @@ export async function GET(request: Request) {
         });
 
         const agent = stagehand.agent({
+          // @ts-ignore 
           provider: provider === "anthropic" ? "anthropic" : provider === "google" ? "google" : "openai",
           model: config.model,
           options: {

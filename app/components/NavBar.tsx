@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Layers, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface NavBarProps {
   title?: string;
