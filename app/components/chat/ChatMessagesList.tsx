@@ -1,8 +1,8 @@
 import { RefObject, useRef } from "react";
 import { BrowserStep } from "@/app/types/ChatFeed";
-import ChatMessageOpenAI from "./messages/ChatMessageOpenAI";
-import ChatMessageAnthropic from "./messages/ChatMessageAnthropic";
-import ChatMessageGoogle from "./messages/ChatMessageGoogle";
+import ChatMessageOpenAI from "@/app/components/chat/messages/ChatMessageOpenAI";
+import ChatMessageAnthropic from "@/app/components/chat/messages/ChatMessageAnthropic";
+import ChatMessageGoogle from "@/app/components/chat/messages/ChatMessageGoogle";
 
 type Provider = "openai" | "anthropic" | "google";
 
