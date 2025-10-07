@@ -16,7 +16,7 @@ const ppNeue = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL("https://arena.browserbase.com"),
   title: "Arena",
   description: "Watch Computer Use Agents go head-to-head",
   openGraph: {

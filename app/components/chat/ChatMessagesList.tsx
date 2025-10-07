@@ -73,13 +73,14 @@ export default function ChatMessagesList({
   return (
     <div
       ref={handleContainerRef}
-      className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 hide-scrollbar"
+      className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 hide-scrollbar w-full"
       style={{
         height: isMobile
           ? "calc(100vh - 400px)"
           : "calc(100% - 100px)",
         flex: "1 1 auto",
         position: "relative",
+        maxWidth: "100%",
       }}
     >
       {filteredSteps.map((step, index) => 

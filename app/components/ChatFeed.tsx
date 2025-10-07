@@ -222,7 +222,7 @@ function AgentPanel({
 
           {/* Chat sidebar - Desktop only */}
           <div
-            className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-3 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1"
+            className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-2 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1 overflow-hidden"
             style={{
               height: "calc(100vh - 8rem)",
               position: "relative",

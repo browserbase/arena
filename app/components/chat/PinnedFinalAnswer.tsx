@@ -8,7 +8,7 @@ export default function PinnedFinalAnswer({
   message,
 }: PinnedFinalAnswerProps) {
   return (
-    <div className="relative -mx-4 md:-mx-6 mt-4">
+    <div className="relative mt-4">
       <motion.div
         className="font-ppsupply z-10 w-full max-h-[30vh] overflow-y-scroll"
         initial={{ opacity: 0, y: 10 }}
@@ -40,7 +40,7 @@ export default function PinnedFinalAnswer({
           }}
         ></div>
 
-        <div className="px-4 py-3 md:px-6 md:py-4">
+        <div className="px-3 py-3 md:px-4 md:py-4">
           <p className="break-words whitespace-pre-wrap text-xs md:text-sm text-[#2E191E] leading-relaxed">
             {message}
           </p>

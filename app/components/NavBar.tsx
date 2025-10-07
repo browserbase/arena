@@ -49,6 +49,20 @@ export default function NavBar({
         </a>
       </div>
       <div className="flex items-center gap-1.5 sm:gap-2">
+        <a
+          href="https://www.stagehand.dev/agent-evals"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <button className="h-fit flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2 gap-1 text-xs sm:text-sm font-medium text-[#100D0D] border border-[#CAC8C7] transition-colors duration-200 hover:opacity-90"
+            style={{ backgroundColor: "#FFC83C" }}
+          >
+            <span className="font-ppsupply">
+              <span className="sm:hidden">Evals</span>
+              <span className="hidden sm:inline">Computer Use Evaluations</span>
+            </span>
+          </button>
+        </a>
         {showGitHubButton && (
           <a
             href="https://github.com/browserbase/arena"
