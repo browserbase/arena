@@ -8,7 +8,6 @@ interface BrowserSessionContainerProps {
   sessionUrl: string | null;
   isVisible: boolean;
   isCompleted: boolean;
-  initialMessage: string | undefined;
   onRestart?: () => void;
 }
 
@@ -99,7 +98,6 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
   sessionUrl,
   isVisible,
   isCompleted,
-  initialMessage,
   onRestart = () => {},
 }) => {
   // Track the animation state of curtains

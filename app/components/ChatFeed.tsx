@@ -193,7 +193,6 @@ function AgentPanel({
               sessionUrl={browserDisplayUrl}
               isVisible={true}
               isCompleted={agentFinished}
-              initialMessage={goal || undefined}
               onRestart={onRestartAll}
             />
           </div>
@@ -215,7 +214,6 @@ function AgentPanel({
               sessionUrl={browserDisplayUrl}
               isVisible={true}
               isCompleted={agentFinished}
-              initialMessage={goal || undefined}
               onRestart={onRestartAll}
             />
           </div>
