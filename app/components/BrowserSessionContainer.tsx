@@ -246,15 +246,6 @@ const BrowserSessionContainer: React.FC<BrowserSessionContainerProps> = ({
                     >
                       Task completed
                     </motion.span>
-                    <motion.span
-                      className="text-sm md:text-xl italic text-white break-words max-h-[150px] md:max-h-none overflow-y-auto px-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6 }}
-                    >
-                      &quot;{initialMessage}&quot;
-                    </motion.span>
-
                     <motion.a
                       href="https://www.browserbase.com/sign-up"
                       target="_blank"

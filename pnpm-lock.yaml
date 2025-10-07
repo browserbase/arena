@@ -111,6 +111,9 @@ importers:
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
+      tailwind-scrollbar:
+        specifier: ^4.0.2
+        version: 4.0.2(react@19.1.1)(tailwindcss@3.4.17)
       tailwindcss:
         specifier: ^3.4.1
         version: 3.4.17
@@ -590,6 +593,9 @@ packages:
 
   '@types/node@20.19.11':
     resolution: {integrity: sha512-uug3FEEGv0r+jrecvUUpbY8lLisvIjg6AAic6a2bSP5OEOLeJsDSnvhCDov7ipFFMXS3orMpzlmi0ZcuGkBbow==}
+
+  '@types/prismjs@1.26.5':
+    resolution: {integrity: sha512-AUZTa7hQ2KY5L7AmtSiqxlhWxb4ina0yd8hNbl4TWuqnv/pFP0nDMb3YrfSBf4hJVGLh2YEIBfKaBW/9UEl6IQ==}
 
   '@types/react-dom@19.1.9':
     resolution: {integrity: sha512-qXRuZaOsAdXKFyOhRBg6Lqqc0yay13vN7KrIg4L7N4aaHN68ma9OK3NE1BoDFgFOTfM7zg+3/8+2n8rLUH3OKQ==}
@@ -2493,6 +2499,11 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
+  prism-react-renderer@2.4.1:
+    resolution: {integrity: sha512-ey8Ls/+Di31eqzUxC46h8MksNuGx/n0AAC8uKpwFau4RPDYLuE3EXTp8N8G2vX2N7UC/+IXeNUnlWBGGcAG+Ig==}
+    peerDependencies:
+      react: '>=16.0.0'
+
   prismjs@1.27.0:
     resolution: {integrity: sha512-t13BGPUlFDR7wRB5kQDG4jjl7XeuH6jbJGt11JHPL96qwsEHNX2+68tFXqc1/k+/jALsbSWJKUOT/hcYAZ5LkA==}
     engines: {node: '>=6'}
@@ -2860,6 +2871,12 @@ packages:
 
   tailwind-merge@3.3.1:
     resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
+
+  tailwind-scrollbar@4.0.2:
+    resolution: {integrity: sha512-wAQiIxAPqk0MNTPptVe/xoyWi27y+NRGnTwvn4PQnbvB9kp8QUBiGl/wsfoVBHnQxTmhXJSNt9NHTmcz9EivFA==}
+    engines: {node: '>=12.13.0'}
+    peerDependencies:
+      tailwindcss: 4.x
 
   tailwindcss-animate@1.0.7:
     resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
@@ -3270,12 +3287,8 @@ snapshots:
     dependencies:
       '@anthropic-ai/sdk': 0.39.0
       '@browserbasehq/sdk': 2.6.0
-<<<<<<< HEAD
       '@google/genai': 1.22.0(@modelcontextprotocol/sdk@1.19.1)
       '@modelcontextprotocol/sdk': 1.19.1
-=======
-      '@google/genai': 1.22.0
->>>>>>> 3f95551 (add pinned final answer, name changes)
       ai: 4.3.19(react@19.1.1)(zod@3.25.76)
       deepmerge: 4.3.1
       devtools-protocol: 0.0.1464554
@@ -3302,7 +3315,6 @@ snapshots:
       '@ai-sdk/xai': 1.2.18(zod@3.25.76)
       ollama-ai-provider: 1.2.0(zod@3.25.76)
     transitivePeerDependencies:
-      - '@modelcontextprotocol/sdk'
       - bufferutil
       - encoding
       - react
@@ -3369,11 +3381,7 @@ snapshots:
       '@eslint/core': 0.15.2
       levn: 0.4.1
 
-<<<<<<< HEAD
   '@google/genai@1.22.0(@modelcontextprotocol/sdk@1.19.1)':
-=======
-  '@google/genai@1.22.0':
->>>>>>> 3f95551 (add pinned final answer, name changes)
     dependencies:
       google-auth-library: 9.15.1
       ws: 8.18.3
@@ -3636,6 +3644,8 @@ snapshots:
   '@types/node@20.19.11':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/prismjs@1.26.5': {}
 
   '@types/react-dom@19.1.9(@types/react@19.1.12)':
     dependencies:
@@ -5915,6 +5925,12 @@ snapshots:
 
   prettier@3.6.2: {}
 
+  prism-react-renderer@2.4.1(react@19.1.1):
+    dependencies:
+      '@types/prismjs': 1.26.5
+      clsx: 2.1.1
+      react: 19.1.1
+
   prismjs@1.27.0: {}
 
   prismjs@1.30.0: {}
@@ -6401,6 +6417,13 @@ snapshots:
       '@pkgr/core': 0.2.9
 
   tailwind-merge@3.3.1: {}
+
+  tailwind-scrollbar@4.0.2(react@19.1.1)(tailwindcss@3.4.17):
+    dependencies:
+      prism-react-renderer: 2.4.1(react@19.1.1)
+      tailwindcss: 3.4.17
+    transitivePeerDependencies:
+      - react
 
   tailwindcss-animate@1.0.7(tailwindcss@3.4.17):
     dependencies:
