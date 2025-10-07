@@ -48,7 +48,7 @@ type RightProvider = "openai" | "anthropic";
 export default function Home() {
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [initialMessage, setInitialMessage] = useState<string | null>(null);
-  const [rightProvider, setRightProvider] = useState<RightProvider>("openai");
+  const [rightProvider, setRightProvider] = useState<RightProvider>("anthropic");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -120,6 +120,22 @@ export default function Home() {
           {/* Top Navigation */}
           <NavBar />
 
+          {/* OpenAI Issues Banner */}
+          <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mx-4 sm:mx-6 z-20 relative">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium">
+                  We're currently experiencing issues with OpenAI's API. Please use Anthropic for now.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Main Content */}
           <main className="flex-1 flex flex-col items-center pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-12 sm:pb-16 md:pb-24 lg:pb-32 px-4 sm:px-6 z-10">
             <div className="w-full max-w-[640px] md:max-w-[800px] lg:max-w-[960px] bg-white border border-[#CAC8C7] shadow-sm z-10">
@@ -157,12 +173,9 @@ export default function Home() {
                       <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">Right:</span>
                       <div className="flex-1 inline-flex border border-[#CAC8C7] bg-white">
                         <button
-                          className={`flex-1 px-3 sm:px-4 py-1 text-xs sm:text-sm font-ppsupply transition-all duration-200 ${
-                            rightProvider === "openai" 
-                              ? "bg-[#2E191E] text-white" 
-                              : "bg-white text-[#2E191E] hover:bg-gray-50"
-                          }`}
-                          onClick={() => setRightProvider("openai")}
+                          className="flex-1 px-3 sm:px-4 py-1 text-xs sm:text-sm font-ppsupply cursor-not-allowed opacity-50 bg-gray-100 text-gray-400"
+                          disabled
+                          title="Currently unavailable due to API issues"
                         >
                           OpenAI
                         </button>
