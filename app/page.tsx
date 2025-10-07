@@ -48,7 +48,8 @@ type RightProvider = "openai" | "anthropic";
 export default function Home() {
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [initialMessage, setInitialMessage] = useState<string | null>(null);
-  const [rightProvider, setRightProvider] = useState<RightProvider>("anthropic");
+  const [rightProvider, setRightProvider] =
+    useState<RightProvider>("anthropic");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -124,13 +125,22 @@ export default function Home() {
           <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mx-4 sm:mx-6 z-20 relative">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-orange-500"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium">
-                  We're currently experiencing issues with OpenAI's API. Please use Anthropic for now.
+                  We're currently experiencing issues with OpenAI's API. Please
+                  use Anthropic for now.
                 </p>
               </div>
             </div>
@@ -161,16 +171,22 @@ export default function Home() {
                   <p className="text-sm sm:text-base md:text-lg font-ppsupply text-gray-500 text-center">
                     Compare AI models side-by-side as they browse the web.
                   </p>
-                  
+
                   {/* Provider Selection */}
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 p-3 md:p-4 bg-gray-50 border border-[#CAC8C7] w-full">
                     <div className="flex items-center gap-2 sm:gap-3 flex-1">
-                      <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">Left:</span>
-                      <span className="flex-1 text-center px-3 py-1 bg-[#2E191E] text-white text-xs sm:text-sm font-ppsupply">Gemini</span>
+                      <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">
+                        Left:
+                      </span>
+                      <span className="flex-1 text-center px-3 py-1 bg-[#2E191E] text-white text-xs sm:text-sm font-ppsupply">
+                        Gemini
+                      </span>
                     </div>
                     <div className="hidden sm:block w-px h-6 bg-[#CAC8C7]"></div>
                     <div className="flex items-center gap-2 sm:gap-3 flex-1">
-                      <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">Right:</span>
+                      <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">
+                        Right:
+                      </span>
                       <div className="flex-1 inline-flex border border-[#CAC8C7] bg-white">
                         <button
                           className="flex-1 px-3 sm:px-4 py-1 text-xs sm:text-sm font-ppsupply cursor-not-allowed opacity-50 bg-gray-100 text-gray-400"
@@ -181,8 +197,8 @@ export default function Home() {
                         </button>
                         <button
                           className={`flex-1 px-3 sm:px-4 py-1 text-xs sm:text-sm font-ppsupply transition-all duration-200 ${
-                            rightProvider === "anthropic" 
-                              ? "bg-[#2E191E] text-white" 
+                            rightProvider === "anthropic"
+                              ? "bg-[#2E191E] text-white"
                               : "bg-white text-[#2E191E] hover:bg-gray-50"
                           }`}
                           onClick={() => setRightProvider("anthropic")}
@@ -239,15 +255,26 @@ export default function Home() {
                     className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
                     <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
-                      <span className="text-left text-xs sm:text-sm md:text-base">Review a pull request<br />on Github</span>
+                      <span className="text-left text-xs sm:text-sm md:text-base">
+                        Review a pull request
+                        <br />
+                        on Github
+                      </span>
                       <div className="self-end sm:self-start">
-                        <Code className="sm:hidden" size={16} strokeWidth={1.5} />
-                        <Code className="hidden sm:block" size={20} strokeWidth={1.5} />
+                        <Code
+                          className="sm:hidden"
+                          size={16}
+                          strokeWidth={1.5}
+                        />
+                        <Code
+                          className="hidden sm:block"
+                          size={20}
+                          strokeWidth={1.5}
+                        />
                       </div>
                     </div>
-                  
                   </motion.button>
-                  
+
                   <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -260,10 +287,22 @@ export default function Home() {
                     className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
                     <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
-                      <span className="text-left text-xs sm:text-sm md:text-base">Browse Hacker News<br />for trending debates</span>
+                      <span className="text-left text-xs sm:text-sm md:text-base">
+                        Browse Hacker News
+                        <br />
+                        for trending debates
+                      </span>
                       <div className="self-end sm:self-start">
-                        <MessageCircle className="sm:hidden" size={16} strokeWidth={1.5} />
-                        <MessageCircle className="hidden sm:block" size={20} strokeWidth={1.5} />
+                        <MessageCircle
+                          className="sm:hidden"
+                          size={16}
+                          strokeWidth={1.5}
+                        />
+                        <MessageCircle
+                          className="hidden sm:block"
+                          size={20}
+                          strokeWidth={1.5}
+                        />
                       </div>
                     </div>
                   </motion.button>
@@ -279,10 +318,22 @@ export default function Home() {
                     className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
                     <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
-                      <span className="text-left text-xs sm:text-sm md:text-base">Play a game of<br />2048</span>
+                      <span className="text-left text-xs sm:text-sm md:text-base">
+                        Play a game of
+                        <br />
+                        2048
+                      </span>
                       <div className="self-end sm:self-start">
-                        <UtensilsCrossed className="sm:hidden" size={16} strokeWidth={1.5} />
-                        <UtensilsCrossed className="hidden sm:block" size={20} strokeWidth={1.5} />
+                        <UtensilsCrossed
+                          className="sm:hidden"
+                          size={16}
+                          strokeWidth={1.5}
+                        />
+                        <UtensilsCrossed
+                          className="hidden sm:block"
+                          size={20}
+                          strokeWidth={1.5}
+                        />
                       </div>
                     </div>
                   </motion.button>
@@ -290,14 +341,29 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.7 }}
-                    onClick={() => startChat("Find the current price of Bitcoin and Ethereum.")}
+                    onClick={() =>
+                      startChat(
+                        "Find the current price of Bitcoin and Ethereum."
+                      )
+                    }
                     className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
                     <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
-                    <span className="text-left text-xs sm:text-sm md:text-base">Get current crypto prices<br /></span>
+                      <span className="text-left text-xs sm:text-sm md:text-base">
+                        Get current crypto prices
+                        <br />
+                      </span>
                       <div className="self-end sm:self-start">
-                        <Search className="sm:hidden" size={16} strokeWidth={1.5} />
-                        <Search className="hidden sm:block" size={20} strokeWidth={1.5} />
+                        <Search
+                          className="sm:hidden"
+                          size={16}
+                          strokeWidth={1.5}
+                        />
+                        <Search
+                          className="hidden sm:block"
+                          size={20}
+                          strokeWidth={1.5}
+                        />
                       </div>
                     </div>
                   </motion.button>
