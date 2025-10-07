@@ -13,7 +13,7 @@ interface NavBarProps {
 }
 
 export default function NavBar({
-  title = "Browser Agent Comparison",
+  title = "Arena",
   showCloseButton = false,
   onClose,
   showGitHubButton = true,
@@ -31,7 +31,7 @@ export default function NavBar({
     >
       <div className="flex items-center gap-2">
         <a
-          href="https://www.browserbase.com/cua/google"
+          href="https://www.browserbase.com/cua/gemini"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity duration-200"
@@ -49,27 +49,9 @@ export default function NavBar({
         </a>
       </div>
       <div className="flex items-center gap-1.5 sm:gap-2">
-        <a
-          href="https://www.browserbase.com/cua/google"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <button className="flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-2 bg-white gap-1 text-xs sm:text-sm font-medium border border-[#F14A1C] transition-all duration-200 hover:bg-[#F14A1C] group h-full">
-            <Layers
-              size={16}
-              className="sm:size-5 sm:mr-2 text-[#F14A1C] group-hover:text-white transition-colors duration-200"
-              strokeWidth={2}
-              strokeLinecap="square"
-              strokeLinejoin="miter"
-            />
-            <span className="hidden sm:inline text-[#F14A1C] group-hover:text-white transition-colors duration-200">
-              Deploy
-            </span>
-          </button>
-        </a>
         {showGitHubButton && (
           <a
-            href="https://github.com/browserbase/browser-agent-comparison"
+            href="https://github.com/browserbase/arena"
             target="_blank"
             rel="noopener noreferrer"
           >

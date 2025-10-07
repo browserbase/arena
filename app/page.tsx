@@ -90,7 +90,7 @@ export default function Home() {
       setIsChatVisible(true);
 
       try {
-        posthog.capture("google_comparison_submit_message", {
+        posthog.capture("browser_agent_arena_submit_message", {
           message: finalMessage,
           rightProvider,
         });
@@ -140,7 +140,7 @@ export default function Home() {
               <div className="p-4 md:p-10 lg:p-12 flex flex-col items-center gap-4 md:gap-10">
                 <div className="flex flex-col items-center gap-2 md:gap-5">
                   <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-ppneue text-gray-900 text-center">
-                    Browser Agent Comparison
+                    Browser Agent Arena
                   </h1>
                   <p className="text-sm sm:text-base md:text-lg font-ppsupply text-gray-500 text-center">
                     Compare AI models side-by-side as they browse the web.
@@ -277,11 +277,11 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.7 }}
-                    onClick={() => startChat("Compare the features and pricing of the top 3 project management tools on Product Hunt today. Create a simple comparison for me.")}
+                    onClick={() => startChat("Find the current price of Bitcoin and Ethereum.")}
                     className="p-2 sm:p-3 md:p-5 lg:p-6 text-xs sm:text-sm md:text-base lg:text-xl text-[#2E191E] border border-[#CAC8C7] hover:border-[#FF3B00] hover:text-[#FF3B00] transition-colors font-ppsupply font-medium text-center overflow-hidden text-ellipsis break-words whitespace-normal min-h-[80px] sm:min-h-[100px] md:min-h-[120px] flex items-center justify-center backdrop-blur-sm bg-opacity-60 bg-[rgba(245,240,255,0.15)] hover:bg-[rgba(255,59,0,0.05)]"
                   >
                     <div className="w-full h-full flex flex-col sm:flex-row justify-between items-start px-2 sm:px-3 md:px-4 py-2 sm:py-3 gap-2">
-                      <span className="text-left text-xs sm:text-sm md:text-base">Research and compare<br />trending tools</span>
+                    <span className="text-left text-xs sm:text-sm md:text-base">Get current crypto prices<br /></span>
                       <div className="self-end sm:self-start">
                         <Search className="sm:hidden" size={16} strokeWidth={1.5} />
                         <Search className="hidden sm:block" size={20} strokeWidth={1.5} />

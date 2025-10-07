@@ -13,9 +13,11 @@ import ChatMessagesList from "./chat/ChatMessagesList";
 
 import { useAgentStreamGoogle } from "@/app/hooks/useAgentStreamGoogle";
 import { useAgentStreamAnthropic } from "@/app/hooks/useAgentStreamAnthropic";
+import { useAgentStreamOpenAI } from "@/app/hooks/useAgentStreamOpenAI";
 import { ChatFeedProps, BrowserStep } from "@/app/types/ChatFeed";
 import { SessionLiveURLs } from "@browserbasehq/sdk/resources/index.mjs";
-import { useAgentStreamOpenAI } from "@/app/hooks/useAgentStreamOpenAI";
+import PinnedFinalAnswer from "./chat/PinnedFinalAnswer";
+
 
 type RightProvider = "openai" | "anthropic";
 
@@ -113,6 +115,21 @@ function AgentPanel({
 
   // Prefer initial session URL (from creation) to open curtains early; fallback to active page URL or hook sessionUrl
   const browserDisplayUrl = initialSessionUrl || activePageUrl || sessionUrl;
+  
+  // Memoize final answer step
+  const finalAnswerStep = useMemo(() => {
+    return uiState.steps
+      .slice()
+      .reverse()
+      .find((step) => step.tool === "MESSAGE" && step.instruction === "Final Answer");
+  }, [uiState.steps]);
+  
+  const stepsWithoutFinal = useMemo(() => {
+    if (!finalAnswerStep) {
+      return uiState.steps;
+    }
+    return uiState.steps.filter((step) => step !== finalAnswerStep);
+  }, [uiState.steps, finalAnswerStep]);
 
   // Track scroll position to apply conditional margin
   useEffect(() => {
@@ -205,7 +222,7 @@ function AgentPanel({
 
           {/* Chat sidebar - Desktop only */}
           <div
-            className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-3 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1 overflow-hidden"
+            className="w-full md:w-[320px] min-w-0 md:min-w-[260px] px-3 pb-3 md:px-4 md:pb-4 border-r border-[#CAC8C7] flex flex-col flex-1"
             style={{
               height: "calc(100vh - 8rem)",
               position: "relative",
@@ -220,11 +237,16 @@ function AgentPanel({
             )}
 
             <ChatMessagesList
-              steps={uiState.steps}
+              steps={stepsWithoutFinal}
               chatContainerRef={chatContainerRef}
               isMobile={false}
               provider={providerType}
+              hasPinnedFinalAnswer={Boolean(finalAnswerStep)}
             />
+            
+            {finalAnswerStep && (
+              <PinnedFinalAnswer message={finalAnswerStep.text || ""} />
+            )}
           </div>
         </div>
       )}
@@ -295,7 +317,7 @@ export default function ChatFeed({ initialMessage, onClose, rightProvider = "ope
         
         // Track the start event
         try {
-          posthog.capture("google_comparison_start", { 
+          posthog.capture("browser_agent_arena_start", { 
             goal: goal?.substring(0, 100), 
             rightProvider,
             leftSessionId: leftSessionData.sessionId,
@@ -351,7 +373,7 @@ export default function ChatFeed({ initialMessage, onClose, rightProvider = "ope
       exit="exit"
     >
       <NavBar
-        title="Browser Agent Comparison"
+        title="Arena"
         showCloseButton={true}
         onClose={onClose}
         showGitHubButton={false}
@@ -454,7 +476,7 @@ export default function ChatFeed({ initialMessage, onClose, rightProvider = "ope
                   className={isMobile ? "border-b border-[#CAC8C7]" : "border-r border-[#CAC8C7]"}
                 />
                 <AgentPanel
-                  title={rightProvider === "openai" ? "OpenAI Computer Use" : "Anthropic Computer Use (Claude Sonnet 4)"}
+                  title={rightProvider === "openai" ? "OpenAI Computer Use" : "Anthropic Computer Use (Claude Sonnet 4.5)"}
                   provider={rightProvider}
                   goal={goal}
                   sessionId={sessions.right.id}

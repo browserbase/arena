@@ -34,6 +34,7 @@ export function useAgentStreamGoogle({
   const eventSourceRef = useRef<EventSource | null>(null);
   const stepCounterRef = useRef(1);
   const stepOffsetRef = useRef(0);
+  const finalMessageAddedRef = useRef<string | null>(null);
   // Use refs for callbacks to avoid dependency issues
   const onStartRef = useRef(onStart);
   const onDoneRef = useRef(onDone);
@@ -306,13 +307,38 @@ export function useAgentStreamGoogle({
     es.addEventListener("done", (e) => {
       try {
         const payload = JSON.parse((e as MessageEvent).data);
-
-        // If there's a final message, add it as the last step
+        
+        // Derive final message from payload
+        let finalMessage: string | undefined;
         if (payload.finalMessage) {
+          finalMessage = payload.finalMessage;
+        } else if (payload.output) {
+          finalMessage = payload.output;
+        } else if (payload.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
+          const lastMessage = payload.messages[payload.messages.length - 1];
+          finalMessage = typeof lastMessage === 'string' ? lastMessage : lastMessage.text;
+        }
+        
+        // If no final message in payload, fall back to last MESSAGE step
+        if (!finalMessage) {
+          setState((prev) => {
+            const lastMessageStep = [...prev.steps]
+              .reverse()
+              .find(step => step.tool === "MESSAGE" && step.text);
+            if (lastMessageStep?.text) {
+              finalMessage = lastMessageStep.text;
+            }
+            return prev;
+          });
+        }
+        
+        // Append final answer step if we have a message and haven't added it yet
+        if (finalMessage && finalMessageAddedRef.current !== finalMessage) {
+          finalMessageAddedRef.current = finalMessage;
           setState((prev) => {
             const finalStep: BrowserStep = {
               stepNumber: prev.steps.length + 1,
-              text: payload.finalMessage,
+              text: finalMessage!,
               reasoning: "",
               tool: "MESSAGE",
               instruction: "Final Answer",

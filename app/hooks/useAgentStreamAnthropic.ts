@@ -34,6 +34,7 @@ export function useAgentStreamAnthropic({
   const eventSourceRef = useRef<EventSource | null>(null);
   const stepCounterRef = useRef(0); 
   const stepOffsetRef = useRef(0);
+  const finalMessageAddedRef = useRef<string | null>(null);
   // Use refs for callbacks to avoid dependency issues
   const onStartRef = useRef(onStart);
   const onDoneRef = useRef(onDone);
@@ -73,38 +74,8 @@ export function useAgentStreamAnthropic({
         return result;
       }
       return null;
-    } catch {
-      // Fallback for non-JSON logs
-      if (raw.startsWith("💭 ")) {
-        const result = { kind: "thought" as const, text: raw.slice(2).trim() };
-        return result;
-      }
-      const execMatch = raw.match(/^Executing step\s+(\d+)/i);
-      if (execMatch) {
-        const stepNum = parseInt(execMatch[1], 10);
-        const result = { kind: "summary" as const, step: stepNum, text: "" };
-        return result;
-      }
-      const textBlockMatch = raw.match(/^Found text block:\s*(.*)$/i);
-      if (textBlockMatch) {
-        const result = { kind: "thought" as const, text: textBlockMatch[1].trim() };
-        return result;
-      }
-      const fnMatch = raw.match(/^Found function call:\s*([A-Za-z0-9_]+)(?:\s+with args:\s*([\s\S]+))?$/i);
-      if (fnMatch) {
-        let args: ActionArgs = { action: "" };
-        const jsonText = (fnMatch[2] || "").trim();
-        if (jsonText) {
-          try {
-            args = JSON.parse(jsonText);
-          } catch {
-            args = { action: jsonText };
-          }
-        }
-        const result = { kind: "action" as const, step: stepCounterRef.current, tool: fnMatch[1], args };
-        stepCounterRef.current++;
-        return result;
-      }
+    } catch (e) {
+      console.warn("Failed to parse log as JSON:", raw, e);
       return null;
     }
   }, []);
@@ -348,10 +319,54 @@ export function useAgentStreamAnthropic({
     es.addEventListener("done", (e) => {
       try {
         const payload = JSON.parse((e as MessageEvent).data);
-        setState((prev) => ({
-          ...prev,
-          isFinished: true,
-        }));
+        
+        // Derive final message from payload
+        let finalMessage: string | undefined;
+        if (payload.finalMessage) {
+          finalMessage = payload.finalMessage;
+        } else if (payload.output) {
+          finalMessage = payload.output;
+        } else if (payload.messages && Array.isArray(payload.messages) && payload.messages.length > 0) {
+          const lastMessage = payload.messages[payload.messages.length - 1];
+          finalMessage = typeof lastMessage === 'string' ? lastMessage : lastMessage.text;
+        }
+        
+        // If no final message in payload, fall back to last MESSAGE step
+        if (!finalMessage) {
+          setState((prev) => {
+            const lastMessageStep = [...prev.steps]
+              .reverse()
+              .find(step => step.tool === "MESSAGE" && step.text);
+            if (lastMessageStep?.text) {
+              finalMessage = lastMessageStep.text;
+            }
+            return prev;
+          });
+        }
+        
+        // Append final answer step if we have a message and haven't added it yet
+        if (finalMessage && finalMessageAddedRef.current !== finalMessage) {
+          finalMessageAddedRef.current = finalMessage;
+          setState((prev) => {
+            const finalStep: BrowserStep = {
+              stepNumber: prev.steps.length + 1,
+              text: finalMessage!,
+              reasoning: "",
+              tool: "MESSAGE",
+              instruction: "Final Answer",
+            };
+            return {
+              ...prev,
+              steps: [...prev.steps, finalStep],
+              isFinished: true,
+            };
+          });
+        } else {
+          setState((prev) => ({
+            ...prev,
+            isFinished: true,
+          }));
+        }
 
         onDoneRef.current?.(payload);
         // Clear the session promise for this goal to allow future runs

@@ -87,10 +87,6 @@ export default function ChatMessageAnthropic({ step }: ChatMessageProps) {
                 <div className="text-[#2E191E]">{step.reasoning}</div>
               )}
               {hasText && <div>{step.text}</div>}
-              {/* Show a placeholder if we have action args but no reasoning */}
-              {!hasReasoning && !hasText && hasActionArgs && (
-                <div className="text-gray-500 italic">Executing action...</div>
-              )}
             </>
           )}
 

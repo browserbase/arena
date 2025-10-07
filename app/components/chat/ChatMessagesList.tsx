@@ -11,6 +11,7 @@ interface ChatMessagesListProps {
   chatContainerRef: RefObject<HTMLDivElement | null>;
   isMobile: boolean;
   provider?: Provider;
+  hasPinnedFinalAnswer?: boolean;
 }
 
 export default function ChatMessagesList({
@@ -18,6 +19,7 @@ export default function ChatMessagesList({
   chatContainerRef,
   isMobile,
   provider,
+  hasPinnedFinalAnswer = false,
 }: ChatMessagesListProps) {
   // Track previous steps length to detect new messages
   const prevStepsLength = useRef(0);
@@ -85,7 +87,7 @@ export default function ChatMessagesList({
       )}
       
       {/* Extra padding at bottom to ensure last message is fully visible */}
-      <div style={{ height: '60px' }} />
+      <div style={{ height: hasPinnedFinalAnswer ? '16px' : '60px' }} />
     </div>
   );
 }

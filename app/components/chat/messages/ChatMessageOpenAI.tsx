@@ -45,7 +45,7 @@ export default function ChatMessageOpenAI({ step }: ChatMessageOpenAIProps) {
   if (step.tool === "ERROR") return null;
 
   // Don't render blocks that have no meaningful content yet
-  const hasReasoning = step.reasoning && step.reasoning.trim().length > 0;
+  const hasReasoning = step.reasoning;
   const hasActionArgs = step.actionArgs !== undefined;
   const hasText = step.text && step.text.trim().length > 0;
 
