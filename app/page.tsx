@@ -139,7 +139,7 @@ export default function Home() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium">
-                  We're currently experiencing issues with OpenAI's API. Please
+                  We&apos;re currently experiencing issues with OpenAI&apos;s API. Please
                   use Anthropic for now.
                 </p>
               </div>
