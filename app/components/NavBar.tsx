@@ -38,7 +38,7 @@ export default function NavBar({
         >
           <Image
             src="/favicon.svg"
-            alt="Google Browser"
+            alt="Arena"
             className="w-6 h-6 sm:w-8 sm:h-8"
             width={32}
             height={32}

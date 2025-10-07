@@ -466,7 +466,7 @@ export default function ChatFeed({ initialMessage, onClose, rightProvider = "ope
             ) : (
               <>
                 <AgentPanel
-                  title="Google Computer Use"
+                  title="Gemini Computer Use"
                   provider="google"
                   goal={goal}
                   sessionId={sessions.left.id}

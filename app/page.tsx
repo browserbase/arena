@@ -150,7 +150,7 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 p-3 md:p-4 bg-gray-50 border border-[#CAC8C7] w-full">
                     <div className="flex items-center gap-2 sm:gap-3 flex-1">
                       <span className="font-ppsupply text-xs sm:text-sm text-[#2E191E] font-medium w-10 sm:w-auto">Left:</span>
-                      <span className="flex-1 text-center px-3 py-1 bg-[#2E191E] text-white text-xs sm:text-sm font-ppsupply">Google</span>
+                      <span className="flex-1 text-center px-3 py-1 bg-[#2E191E] text-white text-xs sm:text-sm font-ppsupply">Gemini</span>
                     </div>
                     <div className="hidden sm:block w-px h-6 bg-[#CAC8C7]"></div>
                     <div className="flex items-center gap-2 sm:gap-3 flex-1">
