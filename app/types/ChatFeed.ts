@@ -22,7 +22,6 @@ export interface BrowserStep {
 export interface AgentState {
     sessionId: string | null;
     sessionUrl: string | null;
-    connectUrl: string | null;
     steps: BrowserStep[];
     isLoading: boolean;
 }
