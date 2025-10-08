@@ -8,7 +8,7 @@ import { AgentLog, UseAgentStreamProps, AgentStreamState, LogEvent } from "@/app
 // by sharing a single in-flight promise across mounts for the same goal.
 const sessionCreationPromises = new Map<
   string,
-  Promise<{ sessionId: string; sessionUrl: string | null; connectUrl: string | null }>
+  Promise<{ sessionId: string; sessionUrl: string | null; }>
 >();
 
 export function useAgentStreamAnthropic({
@@ -22,7 +22,6 @@ export function useAgentStreamAnthropic({
   const [state, setState] = useState<AgentStreamState>({
     sessionId: sessionId,
     sessionUrl: null,
-    connectUrl: null,
     steps: [],
     logs: [],
     isLoading: false,
@@ -117,7 +116,6 @@ export function useAgentStreamAnthropic({
               return {
                 sessionId: sessionData.sessionId as string,
                 sessionUrl: (sessionData.sessionUrl as string) ?? null,
-                connectUrl: (sessionData.connectUrl as string) ?? null,
               };
             })();
             sessionCreationPromises.set(goal, promise);
@@ -131,7 +129,6 @@ export function useAgentStreamAnthropic({
             ...prev,
             sessionId: result.sessionId,
             sessionUrl: result.sessionUrl,
-            connectUrl: result.connectUrl,
           }));
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : "Failed to create session";

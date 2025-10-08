@@ -55,12 +55,10 @@ function AgentPanel({
   const [uiState, setUiState] = useState<{
     sessionId: string | null;
     sessionUrl: string | null;
-    connectUrl: string | null;
     steps: BrowserStep[];
   }>({
     sessionId: null,
     sessionUrl: null,
-    connectUrl: null,
     steps: [],
   });
 
@@ -101,7 +99,7 @@ function AgentPanel({
   }
 
   const useAgentStream = agentHooks[providerType];
-  const { sessionId, sessionUrl, connectUrl, steps, isFinished } = useAgentStream({
+  const { sessionId, sessionUrl, steps, isFinished } = useAgentStream({
     sessionId: providedSessionId,
     goal: providedSessionId ? goal : null, // Only pass goal if we have a sessionId
     onStart: handleStart,
@@ -152,10 +150,9 @@ function AgentPanel({
       ...prev,
       sessionId: sessionId || prev.sessionId,
       sessionUrl: sessionUrl || prev.sessionUrl,
-      connectUrl: connectUrl || prev.connectUrl,
       steps,
     }));
-  }, [sessionId, sessionUrl, connectUrl, steps]);
+  }, [sessionId, sessionUrl, steps]);
 
   useEffect(() => {
     if (stopSignal !== lastStopSignalRef.current) {
