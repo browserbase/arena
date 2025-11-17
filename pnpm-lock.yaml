@@ -13,10 +13,13 @@ importers:
         version: 2.6.0
       '@browserbasehq/stagehand':
         specifier: 3.0.3
-        version: 3.0.3(@opentelemetry/api@1.9.0)(deepmerge@4.3.1)(dotenv@16.6.1)(zod@3.25.76)
+        version: 3.0.3(@opentelemetry/api@1.9.0)(bufferutil@4.0.9)(deepmerge@4.3.1)(dotenv@16.6.1)(zod@3.25.76)
       '@vercel/analytics':
         specifier: ^1.4.1
         version: 1.5.0(next@15.1.6(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
+      bufferutil:
+        specifier: ^4.0.8
+        version: 4.0.9
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1041,6 +1044,10 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
+
+  bufferutil@4.0.9:
+    resolution: {integrity: sha512-WDtdLmJvAuNNPzByAYpRo2rF1Mmradw6gvWsQKf63476DDXmomT9zUiGypLcG4ibIM67vhAj8jJRdbmEws2Aqw==}
+    engines: {node: '>=6.14.2'}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -2460,6 +2467,10 @@ packages:
       encoding:
         optional: true
 
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
+
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
@@ -3577,24 +3588,24 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@browserbasehq/stagehand@3.0.3(@opentelemetry/api@1.9.0)(deepmerge@4.3.1)(dotenv@16.6.1)(zod@3.25.76)':
+  '@browserbasehq/stagehand@3.0.3(@opentelemetry/api@1.9.0)(bufferutil@4.0.9)(deepmerge@4.3.1)(dotenv@16.6.1)(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@anthropic-ai/sdk': 0.39.0
       '@browserbasehq/sdk': 2.6.0
-      '@google/genai': 1.22.0(@modelcontextprotocol/sdk@1.19.1)
-      '@langchain/openai': 0.4.9(@langchain/core@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(ws@8.18.3)
+      '@google/genai': 1.22.0(@modelcontextprotocol/sdk@1.19.1)(bufferutil@4.0.9)
+      '@langchain/openai': 0.4.9(@langchain/core@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76)))(ws@8.18.3(bufferutil@4.0.9))
       '@modelcontextprotocol/sdk': 1.19.1
       ai: 5.0.93(zod@3.25.76)
       deepmerge: 4.3.1
       devtools-protocol: 0.0.1464554
       dotenv: 16.6.1
       fetch-cookie: 3.1.0
-      openai: 4.104.0(ws@8.18.3)(zod@3.25.76)
+      openai: 4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76)
       pino: 9.9.0
       pino-pretty: 13.1.1
       playwright: 1.55.0
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
     optionalDependencies:
@@ -3609,12 +3620,12 @@ snapshots:
       '@ai-sdk/perplexity': 2.0.19(zod@3.25.76)
       '@ai-sdk/togetherai': 1.0.28(zod@3.25.76)
       '@ai-sdk/xai': 2.0.33(zod@3.25.76)
-      '@langchain/core': 0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
+      '@langchain/core': 0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76))
       chrome-launcher: 1.2.1
       ollama-ai-provider-v2: 1.5.4(zod@3.25.76)
       patchright-core: 1.56.1
       playwright-core: 1.55.0
-      puppeteer-core: 22.15.0
+      puppeteer-core: 22.15.0(bufferutil@4.0.9)
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - '@opentelemetry/exporter-trace-otlp-proto'
@@ -3689,10 +3700,10 @@ snapshots:
       '@eslint/core': 0.15.2
       levn: 0.4.1
 
-  '@google/genai@1.22.0(@modelcontextprotocol/sdk@1.19.1)':
+  '@google/genai@1.22.0(@modelcontextprotocol/sdk@1.19.1)(bufferutil@4.0.9)':
     dependencies:
       google-auth-library: 9.15.1
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.19.1
     transitivePeerDependencies:
@@ -3812,14 +3823,14 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@langchain/core@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))':
+  '@langchain/core@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
+      langsmith: 0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -3832,11 +3843,11 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/openai@0.4.9(@langchain/core@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(ws@8.18.3)':
+  '@langchain/openai@0.4.9(@langchain/core@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76)))(ws@8.18.3(bufferutil@4.0.9))':
     dependencies:
-      '@langchain/core': 0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
+      '@langchain/core': 0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76))
       js-tiktoken: 1.0.21
-      openai: 4.104.0(ws@8.18.3)(zod@3.25.76)
+      openai: 4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76)
       zod: 3.25.76
       zod-to-json-schema: 3.24.6(zod@3.25.76)
     transitivePeerDependencies:
@@ -4432,6 +4443,10 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
     optional: true
+
+  bufferutil@4.0.9:
+    dependencies:
+      node-gyp-build: 4.8.4
 
   busboy@1.6.0:
     dependencies:
@@ -5731,7 +5746,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  langsmith@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)):
+  langsmith@0.3.79(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -5742,7 +5757,7 @@ snapshots:
       uuid: 10.0.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
-      openai: 4.104.0(ws@8.18.3)(zod@3.25.76)
+      openai: 4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76)
 
   language-subtag-registry@0.3.23: {}
 
@@ -6243,6 +6258,8 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
+  node-gyp-build@4.8.4: {}
+
   normalize-path@3.0.0: {}
 
   object-assign@4.1.1: {}
@@ -6306,7 +6323,7 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  openai@4.104.0(ws@8.18.3)(zod@3.25.76):
+  openai@4.104.0(ws@8.18.3(bufferutil@4.0.9))(zod@3.25.76):
     dependencies:
       '@types/node': 18.19.123
       '@types/node-fetch': 2.6.13
@@ -6316,7 +6333,7 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
     optionalDependencies:
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
       zod: 3.25.76
     transitivePeerDependencies:
       - encoding
@@ -6601,13 +6618,13 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@22.15.0:
+  puppeteer-core@22.15.0(bufferutil@4.0.9):
     dependencies:
       '@puppeteer/browsers': 2.3.0
       chromium-bidi: 0.6.3(devtools-protocol@0.0.1312386)
       debug: 4.4.1
       devtools-protocol: 0.0.1312386
-      ws: 8.18.3
+      ws: 8.18.3(bufferutil@4.0.9)
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -7463,7 +7480,9 @@ snapshots:
 
   wrappy@1.0.2: {}
 
-  ws@8.18.3: {}
+  ws@8.18.3(bufferutil@4.0.9):
+    optionalDependencies:
+      bufferutil: 4.0.9
 
   xtend@4.0.2: {}
 
