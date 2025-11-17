@@ -11,8 +11,9 @@
   },
   "dependencies": {
     "@browserbasehq/sdk": "^2.6.0",
-    "@browserbasehq/stagehand": "github:browserbase/stagehand#pull/1112/head",
+    "@browserbasehq/stagehand": "3.0.3",
     "@vercel/analytics": "^1.4.1",
+    "bufferutil": "^4.0.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^11.0.3",
