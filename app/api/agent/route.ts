@@ -12,19 +12,19 @@ export const maxDuration = 600;
 const PROVIDER_CONFIGS = {
   anthropic: {
     // model: "claude-sonnet-4-20250514",
-    model: "claude-sonnet-4-5-20250929",
+    model: "anthropic/claude-sonnet-4-5-20250929",
     apiKey: process.env.ANTHROPIC_API_KEY!,
     logger: createAnthropicLogger,
     stagehandModel: "anthropic",
   },
   google: {
-    model: "gemini-2.5-computer-use-preview-10-2025",
+    model: "google/gemini-2.5-computer-use-preview-10-2025",
     apiKey: process.env.GOOGLE_API_KEY!,
     logger: createGoogleLogger,
     stagehandModel: "google",
   },
   openai: {
-    model: "computer-use-preview-2025-03-11",
+    model: "openai/computer-use-preview-2025-03-11",
     apiKey: process.env.OPENAI_API_KEY!,
     logger: createOpenAILogger,
     stagehandModel: "openai",
@@ -103,6 +103,8 @@ export async function GET(request: Request) {
       };
 
       let viewportLockInterval: ReturnType<typeof setInterval> | undefined;
+      let fetchHandler: ((params: { requestId: string; request: { url: string } }) => void) | undefined;
+      let mainSessionForFetch: { off: <P = unknown>(event: string, handler: (params: P) => void) => void } | undefined;
 
       const cleanup = async (stagehand?: Stagehand) => {
         if (closed) return;
@@ -110,8 +112,16 @@ export async function GET(request: Request) {
         if (keepAliveTimer) clearInterval(keepAliveTimer);
         if (timeoutTimer) clearTimeout(timeoutTimer);
         if (viewportLockInterval) clearInterval(viewportLockInterval);
+        // Clean up Fetch event listener
+        if (mainSessionForFetch && fetchHandler) {
+          try {
+            mainSessionForFetch.off("Fetch.requestPaused", fetchHandler);
+          } catch (err) {
+            console.error(`[SSE-${provider}] error removing fetch handler:`, err);
+          }
+        }
         try {
-          if (stagehand && !stagehand.isClosed) {
+          if (stagehand && stagehand.context !== null) {
             await stagehand.close();
           }
         } catch {
@@ -143,12 +153,8 @@ export async function GET(request: Request) {
       const stagehand = new Stagehand({
         env: "BROWSERBASE",
         browserbaseSessionID: sessionId,
-        modelName: "openai/gpt-4o",
-        modelClientOptions: {
-          apiKey: process.env.OPENAI_API_KEY,
-        },
+        model: "openai/gpt-4o",
         browserbaseSessionCreateParams: {
-          projectId: process.env.BROWSERBASE_PROJECT_ID!,
           proxies: true,
           browserSettings: {
             viewport: {
@@ -157,7 +163,7 @@ export async function GET(request: Request) {
             },
           },
         },
-        useAPI: false,
+        disableAPI: true,
         verbose: 2,
         disablePino: true,
         logger: loggerInstance,
@@ -168,16 +174,40 @@ export async function GET(request: Request) {
         const init = await stagehand.init();
         console.log(`[SSE-${provider}] Stagehand initialized`, init);
 
-        const page = stagehand.page;
-        await page.route("**/*", (route) => {
-          const url = route.request().url().toLowerCase();
+        const page = stagehand.context.pages()[0];
+
+        // Enable Fetch domain to intercept requests
+        await page.sendCDP("Fetch.enable", {
+          patterns: [{ urlPattern: "*" }],
+        });
+
+        // Get the main session to listen for Fetch events
+        const mainSession = page.getSessionForFrame(page.mainFrameId());
+        mainSessionForFetch = mainSession;
+
+        // Set up event listener for Fetch.requestPaused events
+        fetchHandler = (params: { requestId: string; request: { url: string } }) => {
+          const url = params.request.url.toLowerCase();
           if (url.includes("gemini.browserbase.com") || url.includes("arena.browserbase.com") || url.includes("google.browserbase.com") || url.includes("google-cua.browserbase.com") || url.includes("cua.browserbase.com") || url.includes("operator.browserbase.com") || url.includes("doge.ct.ws")) {
             console.log(`[SSE] Blocked navigation to: ${url}`);
-            route.abort("blockedbyclient");
+            // Block the request
+            page.sendCDP("Fetch.failRequest", {
+              requestId: params.requestId,
+              errorReason: "blockedbyclient",
+            }).catch((err) => {
+              console.error(`[SSE] Error failing request:`, err);
+            });
           } else {
-            route.continue();
+            // Continue the request
+            page.sendCDP("Fetch.continueRequest", {
+              requestId: params.requestId,
+            }).catch((err) => {
+              console.error(`[SSE] Error continuing request:`, err);
+            });
           }
-        });
+        };
+
+        mainSession.on("Fetch.requestPaused", fetchHandler);
 
         send("start", {
           sessionId,
@@ -189,24 +219,18 @@ export async function GET(request: Request) {
         });
 
         const agent = stagehand.agent({
-          provider: provider === "anthropic" ? "anthropic" : provider === "google" ? "google" : "openai",
-          model: config.model,
-          options: {
+          cua: true,
+          systemPrompt: AGENT_INSTRUCTIONS,
+          model: {
+            modelName: config.model,
             apiKey: config.apiKey,
           },
-          instructions: AGENT_INSTRUCTIONS,
         });
 
         const result = await agent.execute({
           instruction: goal,
-          autoScreenshot: true,
           maxSteps: 100,
         });
-
-        try {
-          console.log(`[SSE-${provider}] metrics snapshot`, stagehand.metrics);
-          send("metrics", stagehand.metrics);
-        } catch {}
 
         // Extract final message from logger
         const finalMessage = (loggerInstance as unknown as { getLastMessage?: () => string }).getLastMessage?.() || null;
@@ -223,7 +247,7 @@ export async function GET(request: Request) {
     },
     cancel: async () => {
       try {
-        if (stagehandRef && !stagehandRef.isClosed) {
+        if (stagehandRef && stagehandRef.context !== null) {
           await stagehandRef.close();
         }
       } catch {
